@@ -173,6 +173,7 @@ export class IngestionService {
     totalVideosCount: number,
     totalActressesCount: number,
     totalStudiosCount: number,
+    totalCodesCount: number,
     now: string
   ): Promise<{ latestIndex: LatestIndexFile; statsIndex: StatsIndexFile }> {
     let currentLatest: LatestIndexEntry[] = [];
@@ -217,7 +218,7 @@ export class IngestionService {
       totalVideos: totalVideosCount,
       totalActresses: totalActressesCount,
       totalStudios: totalStudiosCount,
-      totalCodes: totalVideosCount,
+      totalCodes: totalCodesCount,
     };
 
     return { latestIndex, statsIndex };
@@ -628,6 +629,8 @@ private async saveLocalDiskFiles(files: Array<{ path: string; content: string | 
     }
 
     // Build latest.json & stats.json
+    const codesStats = await this.codeRegistry.getStats();
+    const totalCodesCount = codesStats.totalCount + 1; // Assuming 1 new video
     const { latestIndex, statsIndex } = await this.createLatestAndStatsIndex(
       [{
         code: normalizedCode,
@@ -644,6 +647,7 @@ private async saveLocalDiskFiles(files: Array<{ path: string; content: string | 
       updatedVideosList.length,
       actressesIdx.actresses.length,
       studiosIdx.studios.length,
+      totalCodesCount,
       now
     );
 
@@ -1060,11 +1064,14 @@ private async saveLocalDiskFiles(files: Array<{ path: string; content: string | 
       studioSlug: v.studioSlug,
     }));
 
+    const codesStats = await this.codeRegistry.getStats();
+    const totalCodesCount = codesStats.totalCount + newCodeRegistryEntries.length;
     const { latestIndex, statsIndex } = await this.createLatestAndStatsIndex(
       videoItemsForLatest,
       updatedVideosList.length,
       updatedActressesIdx.actresses.length,
       updatedStudiosIdx.studios.length,
+      totalCodesCount,
       now
     );
 
@@ -1393,11 +1400,14 @@ private async saveLocalDiskFiles(files: Array<{ path: string; content: string | 
       studioSlug: v.studioSlug,
     }));
 
+    const codesStats = await this.codeRegistry.getStats();
+    const totalCodesCount = codesStats.totalCount + newCodeRegistryEntries.length;
     const { latestIndex, statsIndex } = await this.createLatestAndStatsIndex(
       videoItemsForLatest,
       totalVideosCount,
       updatedActressesIdx.actresses.length,
       updatedStudiosIdx.studios.length,
+      totalCodesCount,
       now
     );
 

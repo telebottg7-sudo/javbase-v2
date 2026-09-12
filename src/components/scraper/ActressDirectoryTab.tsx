@@ -47,6 +47,10 @@ interface ActressDirectoryTabProps {
   isSavingActress?: boolean;
   actressSaveReceipt?: SaveActressResult | null;
   ingestingCode: string | null;
+  batchIngesting?: boolean;
+  crawlProgress?: number;
+  crawlStatusText?: string;
+  onAutoCrawlAndSave?: (pagesToCrawl: number) => void;
   onLoadActresses: (page: number, force?: boolean) => void;
   onSelectActress: (
     slug: string,
@@ -80,6 +84,10 @@ export const ActressDirectoryTab: React.FC<ActressDirectoryTabProps> = ({
   isSavingActress = false,
   actressSaveReceipt = null,
   ingestingCode,
+  batchIngesting = false,
+  crawlProgress = 0,
+  crawlStatusText = "",
+  onAutoCrawlAndSave,
   onLoadActresses,
   onSelectActress,
   onBackToDirectory,
@@ -90,6 +98,8 @@ export const ActressDirectoryTab: React.FC<ActressDirectoryTabProps> = ({
   onIngest,
   onNavigateToDatabase,
 }) => {
+  const [actressPagesToCrawl, setActressPagesToCrawl] = React.useState<number>(1);
+  
   // If an actress is selected, render the dedicated Actress Movies View
   if (selectedActress) {
     const totalFound = actressVideos.length;
@@ -203,6 +213,40 @@ export const ActressDirectoryTab: React.FC<ActressDirectoryTabProps> = ({
             </div>
 
             <div className="flex items-center gap-2.5">
+
+              <div className="flex items-center bg-neutral-100 dark:bg-slate-800 border border-neutral-200 dark:border-[#1e293b] rounded-xl p-0.5">
+                <span className="px-2 text-[11px] text-neutral-500 dark:text-slate-400 font-medium hidden md:inline">Follow:</span>
+                <select
+                  id="select-actress-pages-to-crawl"
+                  value={actressPagesToCrawl}
+                  onChange={(e) => setActressPagesToCrawl(parseInt(e.target.value, 10))}
+                  disabled={actressVideosLoading || batchIngesting || isSavingActress}
+                  className="bg-transparent text-neutral-800 dark:text-slate-200 text-xs font-medium py-1.5 px-2 rounded-lg focus:outline-none cursor-pointer"
+                  title="Number of pagination pages to follow during auto crawl"
+                >
+                  <option value={1}>1 Page</option>
+                  <option value={2}>2 Pages</option>
+                  <option value={3}>3 Pages</option>
+                  <option value={5}>5 Pages</option>
+                  <option value={10}>10 Pages</option>
+                </select>
+              </div>
+
+              <button
+                id="btn-auto-crawl-actress"
+                onClick={() => onAutoCrawlAndSave?.(actressPagesToCrawl)}
+                disabled={actressVideosLoading || batchIngesting || isSavingActress}
+                className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-xs font-medium rounded-xl shadow-xs transition-colors flex items-center gap-2 cursor-pointer"
+              >
+                {batchIngesting ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-3.5 h-3.5" />
+                )}
+                <span className="hidden sm:inline">Auto Crawl & Save</span>
+                <span className="sm:hidden">Auto Crawl</span>
+              </button>
+
               <button
                 id="btn-save-actress-to-db"
                 disabled={isSavingActress || actressVideosLoading || actressVideos.length === 0}
@@ -254,6 +298,35 @@ export const ActressDirectoryTab: React.FC<ActressDirectoryTabProps> = ({
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             )}
+          </div>
+        )}
+
+
+        {/* Progress Banner */}
+        {batchIngesting && (
+          <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <RefreshCw className="w-4 h-4 text-indigo-600 dark:text-indigo-400 animate-spin" />
+                <span className="text-sm font-medium text-indigo-800 dark:text-indigo-300">
+                  Auto-Crawling & Saving Actress...
+                </span>
+              </div>
+              <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-400">
+                {crawlProgress}%
+              </span>
+            </div>
+            
+            <div className="w-full h-2 bg-indigo-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-indigo-600 dark:bg-indigo-500 rounded-full transition-all duration-300 ease-out"
+                style={{ width: `${crawlProgress}%` }}
+              />
+            </div>
+            
+            <p className="text-xs text-indigo-600/80 dark:text-indigo-400/80 font-medium">
+              {crawlStatusText}
+            </p>
           </div>
         )}
 

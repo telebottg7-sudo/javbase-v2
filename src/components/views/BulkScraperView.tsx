@@ -685,7 +685,88 @@ export const BulkScraperView: React.FC<BulkScraperViewProps> = ({ onNavigate, in
   };
 
 
-const handleAutoCrawlStudio = async (pagesToCrawl = 3) => {
+
+  const handleAutoCrawlActress = async (pagesToCrawl = 3) => {
+    if (!selectedActress) return;
+    setBatchIngesting(true);
+    setActressVideosLoading(true);
+    setIngestionBanner(null);
+    setCrawlProgress(0);
+    setCrawlStatusText("Initializing...");
+
+    const params = new URLSearchParams({
+      mode: "actress",
+      slug: selectedActress,
+      startPage: actressVideosPage.toString(),
+      pagesToCrawl: pagesToCrawl.toString(),
+      enrichDetails: "true",
+    });
+
+    const eventSource = new EventSource(`/api/scrapers/javtiful/auto-crawl-stream?${params.toString()}`);
+
+    eventSource.addEventListener("progress", (event: any) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.progress !== undefined) {
+          setCrawlProgress(Math.round(data.progress * 100));
+        }
+        if (data.status) {
+          setCrawlStatusText(data.status);
+        }
+      } catch (e) {
+        console.error("Failed to parse progress data", e);
+      }
+    });
+
+    eventSource.addEventListener("complete", (event: any) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.success) {
+          if (data.scrapeResult) {
+            setActressVideos(data.scrapeResult.items || []);
+            if (data.scrapeResult.pagination) {
+              setActressVideosPagination(data.scrapeResult.pagination);
+            }
+          }
+          if (data.ingestResult) {
+            setIngestionBanner({
+              success: true,
+              message: `Successfully crawled ${pagesToCrawl} pages. Ingested ${data.ingestResult.ingestedCount} videos.`,
+            });
+          }
+        } else {
+          setIngestionBanner({
+            success: false,
+            message: data.error || "Auto-crawl failed.",
+          });
+        }
+      } catch (e) {
+        setIngestionBanner({
+          success: false,
+          message: "Failed to parse completion result.",
+        });
+      } finally {
+        eventSource.close();
+        setBatchIngesting(false);
+        setActressVideosLoading(false);
+        fetchAutoCommitStatus();
+      }
+    });
+
+    eventSource.onerror = (error) => {
+      console.error("EventSource error:", error);
+      eventSource.close();
+      setBatchIngesting(false);
+      setActressVideosLoading(false);
+      setIngestionBanner({
+        success: false,
+        message: "Connection lost during auto-crawl.",
+      });
+      fetchAutoCommitStatus();
+    };
+  };
+
+  const handleAutoCrawlStudio = async (pagesToCrawl = 3) => {
     if (!selectedStudio) return;
     setBatchIngesting(true);
     setStudioVideosLoading(true);
@@ -1199,6 +1280,10 @@ const handleAutoCrawlCatalog = async (pagesToCrawl = 3) => {
 
       {activeTab === "actresses" && (
         <ActressDirectoryTab
+          batchIngesting={batchIngesting}
+          crawlProgress={crawlProgress}
+          crawlStatusText={crawlStatusText}
+          onAutoCrawlAndSave={handleAutoCrawlActress}
           actresses={actresses}
           actressesLoading={actressesLoading}
           actressesPage={actressesPage}
