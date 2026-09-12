@@ -3,6 +3,7 @@ import {
   ActressesIndexFile,
   StudiosIndexFile,
   VideosIndexFile,
+  LatestIndexFile,
   ActressEntity,
   StudioEntity,
 } from "./types";
@@ -104,6 +105,30 @@ export function getCodeCategory(code: string): string | null {
 }
 
 /**
+ * Extracts numeric sequence value and formatted string from code.
+ * e.g. "SSIS-001" -> { numberVal: 1, numberFormatted: "001" }
+ * "ABP-123" -> { numberVal: 123, numberFormatted: "123" }
+ */
+export function extractCodeNumber(code: string): { numberVal: number; numberFormatted: string } {
+  if (!code) return { numberVal: 0, numberFormatted: "0" };
+  const parts = code.split("-");
+  if (parts.length >= 2) {
+    const lastPart = parts[parts.length - 1];
+    const num = parseInt(lastPart, 10);
+    if (!isNaN(num)) {
+      return { numberVal: num, numberFormatted: lastPart };
+    }
+  }
+  const match = code.match(/(\d+)/g);
+  if (match && match.length > 0) {
+    const lastNumStr = match[match.length - 1];
+    const num = parseInt(lastNumStr, 10);
+    return { numberVal: isNaN(num) ? 0 : num, numberFormatted: lastNumStr };
+  }
+  return { numberVal: 0, numberFormatted: "0" };
+}
+
+/**
  * Computes canonical relative storage path for a video code entity.
  * e.g. "DSOD-123" -> "codes/DSOD/DSOD-123.json"
  */
@@ -114,6 +139,15 @@ export function getCodeFilePath(code: string): string | null {
   if (!category) return null;
   
   return `codes/${category}/${normalized}.json`;
+}
+
+/**
+ * Computes canonical relative path for a code index file.
+ * e.g. "ADN" -> "index/codes/ADN.json"
+ */
+export function getCodeIndexPath(category: string): string {
+  const cat = (category || "").toUpperCase().trim();
+  return `index/codes/${cat}.json`;
 }
 
 /**
@@ -156,6 +190,18 @@ export function createInitialStudiosIndex(): StudiosIndexFile {
  * Factory for a new, valid empty VideosIndexFile (database/index/videos.json)
  */
 export function createInitialVideosIndex(): VideosIndexFile {
+  return {
+    version: 1,
+    updatedAt: new Date().toISOString(),
+    totalCount: 0,
+    videos: [],
+  };
+}
+
+/**
+ * Factory for a new, valid empty LatestIndexFile (database/index/latest.json)
+ */
+export function createInitialLatestIndex(): LatestIndexFile {
   return {
     version: 1,
     updatedAt: new Date().toISOString(),

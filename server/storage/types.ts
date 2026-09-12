@@ -119,3 +119,18 @@ export interface PerformanceTestReport {
     details?: unknown;
   }>;
 }
+
+export interface UncommittedFileItem {
+  path: string;
+  operation: 'write' | 'delete';
+  timestamp: string;
+  sizeBytes?: number;
+  message?: string;
+}
+
+export interface AutoCommitStatus {
+  autoCommitEnabled: boolean;
+  uncommittedCount: number;
+  uncommittedFiles: UncommittedFileItem[];
+  lastModifiedAt?: string;
+}

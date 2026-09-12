@@ -1,15 +1,65 @@
+import fs from "fs/promises";
 import { GitHubStorage } from "../storage/githubStorage";
 import {
   CodesIndexFile,
   CodeIndexSummary,
+  VideosIndexFile,
 } from "../schema/types";
 import {
   normalizeCode,
   getCodeCategory,
   getCodeFilePath,
+  getCodeIndexPath,
+  extractCodeNumber,
+  normalizeSlug,
   createInitialCodesIndex,
 } from "../schema/normalizers";
 import { validateCodesIndex } from "../schema/validators";
+
+export interface CodeCategorySummary {
+  category: string;
+  totalCount: number;
+  minNumber: number;
+  maxNumber: number;
+  numberRangeFormatted: string;
+  sampleCodes: string[];
+  sampleNumbers: number[];
+  topActresses: Array<{ name: string; count: number }>;
+  topStudios: Array<{ name: string; count: number }>;
+  sampleThumbnails: string[];
+  lastAddedAt: string;
+}
+
+export interface CategoryNumberItem {
+  code: string;
+  number: number;
+  numberFormatted: string;
+  title: string;
+  postUrl: string;
+  thumbnail?: string;
+  actressName?: string;
+  actressSlug?: string;
+  studioName?: string;
+  studioSlug?: string;
+  duration?: string;
+  releaseDate?: string;
+  addedAt: string;
+  updatedAt?: string;
+}
+
+export interface CategoryDetailsResult {
+  category: string;
+  totalCount: number;
+  totalFound: number;
+  minNumber: number;
+  maxNumber: number;
+  allNumbers: Array<{ number: number; code: string; title?: string; hasThumbnail?: boolean }>;
+  page: number;
+  totalPages: number;
+  limit: number;
+  sort: string;
+  items: CategoryNumberItem[];
+}
 
 export interface CodeCheckResult {
   rawCode: string;
@@ -23,6 +73,8 @@ export interface RegisterCodeItem {
   code: string;
   title?: string;
   postUrl?: string;
+  thumbnail?: string;
+  releaseDate?: string;
   actressSlug?: string;
   actressName?: string;
   studioSlug?: string;
@@ -40,7 +92,7 @@ export interface RegisterCodesResult {
 
 export class CodeRegistryService {
   private storage: GitHubStorage;
-  private readonly indexPath = "index/codes.json";
+  private prefixCache = new Map<string, { data: any; sha: string | null; fetchedAt: number }>();
   private cachedIndex: CodesIndexFile | null = null;
   private cachedSha: string | null = null;
   private lastFetchedAt = 0;
@@ -51,7 +103,56 @@ export class CodeRegistryService {
   }
 
   /**
+   * Loads a single prefix index file (e.g. index/codes/ADN.json).
+   */
+  async loadPrefixIndex(prefix: string, forceRefresh = false): Promise<{ data: any; sha: string | null }> {
+    const cleanPrefix = (prefix || "").toUpperCase().trim();
+    if (!cleanPrefix) {
+      return {
+        data: { prefix: "", version: 1, updatedAt: new Date().toISOString(), totalCount: 0, videos: [] },
+        sha: null,
+      };
+    }
+
+    const now = Date.now();
+    const cached = this.prefixCache.get(cleanPrefix);
+    if (!forceRefresh && cached && now - cached.fetchedAt < this.cacheTtlMs) {
+      return { data: cached.data, sha: cached.sha };
+    }
+
+    const indexPath = getCodeIndexPath(cleanPrefix);
+    const file = await this.storage.readFile<any>(indexPath);
+
+    if (!file) {
+      const emptyData = {
+        prefix: cleanPrefix,
+        version: 1,
+        updatedAt: new Date().toISOString(),
+        totalCount: 0,
+        codes: [],
+        videos: [],
+      };
+      this.prefixCache.set(cleanPrefix, { data: emptyData, sha: null, fetchedAt: now });
+      return { data: emptyData, sha: null };
+    }
+
+    const data = file.data || {};
+    const items = Array.isArray(data.codes)
+      ? data.codes
+      : Array.isArray(data.videos)
+      ? data.videos
+      : [];
+    data.codes = items;
+    data.videos = items;
+    data.totalCount = items.length;
+
+    this.prefixCache.set(cleanPrefix, { data, sha: file.sha, fetchedAt: now });
+    return { data, sha: file.sha };
+  }
+
+  /**
    * Ensures the index is loaded in memory for fast O(1) checks.
+   * Aggregates split prefix index files into memory without requiring a monolithic codes.json file on disk.
    */
   async getOrLoadIndex(forceRefresh = false): Promise<{ index: CodesIndexFile; sha: string | null }> {
     const now = Date.now();
@@ -59,35 +160,64 @@ export class CodeRegistryService {
       return { index: this.cachedIndex, sha: this.cachedSha };
     }
 
-    const file = await this.storage.readFile<CodesIndexFile>(this.indexPath);
-    if (!file) {
-      // If the file doesn't exist yet, initialize an empty index in memory
-      const initial = createInitialCodesIndex();
-      this.cachedIndex = initial;
-      this.cachedSha = null;
-      this.lastFetchedAt = now;
-      return { index: initial, sha: null };
+    if (forceRefresh) {
+      this.prefixCache.clear();
     }
 
-    const validation = validateCodesIndex(file.data);
-    if (!validation.valid) {
-      console.warn("Codes index failed validation, fallback to clean format:", validation.errors);
-      const safeIndex: CodesIndexFile = {
-        version: file.data?.version ?? 1,
-        updatedAt: file.data?.updatedAt ?? new Date().toISOString(),
-        totalCount: Object.keys(file.data?.codes ?? {}).length,
-        codes: file.data?.codes ?? {},
-      };
-      this.cachedIndex = safeIndex;
-      this.cachedSha = file.sha;
-      this.lastFetchedAt = now;
-      return { index: safeIndex, sha: file.sha };
+    let prefixFiles: string[] = [];
+    try {
+      const files = await this.storage.listFiles("index/codes");
+      prefixFiles = files
+        .filter((f) => f.name.endsWith(".json"))
+        .map((f) => f.name.replace(/\.json$/i, "").toUpperCase());
+    } catch {
+      try {
+        const localFiles = await fs.readdir("database/index/codes");
+        prefixFiles = localFiles
+          .filter((f) => f.endsWith(".json"))
+          .map((f) => f.replace(/\.json$/i, "").toUpperCase());
+      } catch {
+        prefixFiles = [];
+      }
     }
 
-    this.cachedIndex = file.data;
-    this.cachedSha = file.sha;
+    const codesMap: Record<string, CodeIndexSummary> = {};
+    let totalCount = 0;
+
+    for (const prefix of prefixFiles) {
+      const { data } = await this.loadPrefixIndex(prefix, forceRefresh);
+      if (data && Array.isArray(data.videos)) {
+        for (const v of data.videos) {
+          const norm = normalizeCode(v.code || "");
+          if (norm) {
+            codesMap[norm] = {
+              code: norm,
+              title: v.title || norm,
+              postUrl: v.postUrl || "",
+              actressSlug: v.actress?.slug || v.actressSlug,
+              actressName: v.actress?.name || v.actressName,
+              studioSlug: v.studio?.slug || v.studioSlug,
+              studioName: v.studio?.name || v.studioName,
+              addedAt: v.addedAt || new Date().toISOString(),
+            };
+            totalCount++;
+          }
+        }
+      }
+    }
+
+    const aggregatedIndex: CodesIndexFile = {
+      version: 1,
+      updatedAt: new Date().toISOString(),
+      totalCount,
+      codes: codesMap,
+    };
+
+    this.cachedIndex = aggregatedIndex;
+    this.cachedSha = null;
     this.lastFetchedAt = now;
-    return { index: file.data, sha: file.sha };
+
+    return { index: aggregatedIndex, sha: null };
   }
 
   /**
@@ -105,6 +235,312 @@ export class CodeRegistryService {
       if (cat) categories.add(cat);
     }
     return Array.from(categories).sort();
+  }
+
+  /**
+   * Returns rich summaries for all code categories in the database.
+   */
+  async getCategorySummaries(): Promise<CodeCategorySummary[]> {
+    const { index } = await this.getOrLoadIndex();
+    
+    // Load videos index for thumbnails map
+    const videosMap: Record<string, { thumbnail?: string; duration?: string; releaseDate?: string }> = {};
+    try {
+      const videosFile = await this.storage.readFile<VideosIndexFile>("index/videos.json");
+      if (videosFile && Array.isArray(videosFile.data?.videos)) {
+        for (const v of videosFile.data.videos) {
+          if (v.code) {
+            const norm = normalizeCode(v.code);
+            if (norm) {
+              videosMap[norm] = {
+                thumbnail: v.thumbnail,
+                duration: v.duration,
+                releaseDate: v.releaseDate,
+              };
+            }
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    const categoriesMap: Record<
+      string,
+      {
+        category: string;
+        codes: CodeIndexSummary[];
+        numbers: number[];
+        actresses: Record<string, number>;
+        studios: Record<string, number>;
+        thumbnails: string[];
+        lastAddedAt: string;
+      }
+    > = {};
+
+    for (const entry of Object.values(index.codes)) {
+      const cat = getCodeCategory(entry.code);
+      if (!cat) continue;
+
+      if (!categoriesMap[cat]) {
+        categoriesMap[cat] = {
+          category: cat,
+          codes: [],
+          numbers: [],
+          actresses: {},
+          studios: {},
+          thumbnails: [],
+          lastAddedAt: entry.addedAt || new Date().toISOString(),
+        };
+      }
+
+      const catObj = categoriesMap[cat];
+      catObj.codes.push(entry);
+
+      const numInfo = extractCodeNumber(entry.code);
+      if (numInfo.numberVal > 0) {
+        catObj.numbers.push(numInfo.numberVal);
+      }
+
+      if (entry.actressName) {
+        catObj.actresses[entry.actressName] = (catObj.actresses[entry.actressName] || 0) + 1;
+      }
+      if (entry.studioName) {
+        catObj.studios[entry.studioName] = (catObj.studios[entry.studioName] || 0) + 1;
+      }
+
+      const vInfo = videosMap[entry.code];
+      if (vInfo?.thumbnail && catObj.thumbnails.length < 4 && !catObj.thumbnails.includes(vInfo.thumbnail)) {
+        catObj.thumbnails.push(vInfo.thumbnail);
+      }
+
+      if (entry.addedAt && (!catObj.lastAddedAt || entry.addedAt > catObj.lastAddedAt)) {
+        catObj.lastAddedAt = entry.addedAt;
+      }
+    }
+
+    const summaries: CodeCategorySummary[] = Object.values(categoriesMap).map((c) => {
+      const sortedNums = Array.from(new Set(c.numbers)).sort((a, b) => a - b);
+      const minNumber = sortedNums.length > 0 ? sortedNums[0] : 0;
+      const maxNumber = sortedNums.length > 0 ? sortedNums[sortedNums.length - 1] : 0;
+
+      // Top actresses
+      const topActresses = Object.entries(c.actresses)
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 3);
+
+      // Top studios
+      const topStudios = Object.entries(c.studios)
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 3);
+
+      // Sample codes sorted by number
+      const sortedCodes = [...c.codes].sort((a, b) => {
+        const numA = extractCodeNumber(a.code).numberVal;
+        const numB = extractCodeNumber(b.code).numberVal;
+        return numA - numB;
+      });
+
+      const sampleCodes = sortedCodes.slice(0, 6).map((x) => x.code);
+      const sampleNumbers = sortedNums.slice(0, 12);
+
+      let numberRangeFormatted = `${c.codes.length} videos`;
+      if (minNumber > 0 && maxNumber > 0) {
+        numberRangeFormatted = `#${String(minNumber).padStart(3, "0")} - #${String(maxNumber).padStart(3, "0")}`;
+      }
+
+      return {
+        category: c.category,
+        totalCount: c.codes.length,
+        minNumber,
+        maxNumber,
+        numberRangeFormatted,
+        sampleCodes,
+        sampleNumbers,
+        topActresses,
+        topStudios,
+        sampleThumbnails: c.thumbnails,
+        lastAddedAt: c.lastAddedAt,
+      };
+    });
+
+    // Sort by count descending
+    return summaries.sort((a, b) => b.totalCount - a.totalCount || a.category.localeCompare(b.category));
+  }
+
+  /**
+   * Retrieves full number-wise listing and details for a specific code category.
+   */
+  async getCategoryDetails(
+    categoryParam: string,
+    options: {
+      page?: number;
+      limit?: number;
+      sort?: string; // "number_asc" | "number_desc" | "latest" | "title"
+      q?: string;
+      minNum?: number;
+      maxNum?: number;
+      exactNum?: number;
+    } = {}
+  ): Promise<CategoryDetailsResult> {
+    const targetCat = (categoryParam || "").toUpperCase().trim();
+    const { data: prefixData } = await this.loadPrefixIndex(targetCat);
+
+    // Load videos index for enrichment
+    const videosMap: Record<string, { thumbnail?: string; duration?: string; releaseDate?: string }> = {};
+    try {
+      const videosFile = await this.storage.readFile<VideosIndexFile>("index/videos.json");
+      if (videosFile && Array.isArray(videosFile.data?.videos)) {
+        for (const v of videosFile.data.videos) {
+          if (v.code) {
+            const norm = normalizeCode(v.code);
+            if (norm) {
+              videosMap[norm] = {
+                thumbnail: v.thumbnail,
+                duration: v.duration,
+                releaseDate: v.releaseDate,
+              };
+            }
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    const items = Array.isArray(prefixData?.codes)
+      ? prefixData.codes
+      : Array.isArray(prefixData?.videos)
+      ? prefixData.videos
+      : [];
+
+    const matchingEntries: CategoryNumberItem[] = [];
+
+    if (items.length > 0) {
+      for (const entry of items) {
+        const norm = normalizeCode(entry.code || "");
+        if (!norm) continue;
+        const numInfo = extractCodeNumber(norm);
+        const vInfo = videosMap[norm];
+
+        matchingEntries.push({
+          code: norm,
+          number: numInfo.numberVal,
+          numberFormatted: numInfo.numberFormatted,
+          title: entry.title || norm,
+          postUrl: entry.postUrl || "",
+          thumbnail: entry.thumbnail || vInfo?.thumbnail,
+          actressName: entry.actress?.name || entry.actressName,
+          actressSlug: entry.actress?.slug || entry.actressSlug,
+          studioName: entry.studio?.name || entry.studioName,
+          studioSlug: entry.studio?.slug || entry.studioSlug,
+          duration: vInfo?.duration,
+          releaseDate: entry.releaseDate || vInfo?.releaseDate,
+          addedAt: entry.addedAt || new Date().toISOString(),
+        });
+      }
+    } else {
+      const { index } = await this.getOrLoadIndex();
+      for (const entry of Object.values(index.codes)) {
+        const cat = getCodeCategory(entry.code);
+        if (cat !== targetCat) continue;
+
+        const numInfo = extractCodeNumber(entry.code);
+        const vInfo = videosMap[entry.code];
+
+        matchingEntries.push({
+          code: entry.code,
+          number: numInfo.numberVal,
+          numberFormatted: numInfo.numberFormatted,
+          title: entry.title || entry.code,
+          postUrl: entry.postUrl || "",
+          thumbnail: vInfo?.thumbnail,
+          actressName: entry.actressName,
+          actressSlug: entry.actressSlug,
+          studioName: entry.studioName,
+          studioSlug: entry.studioSlug,
+          duration: vInfo?.duration,
+          releaseDate: vInfo?.releaseDate,
+          addedAt: entry.addedAt || new Date().toISOString(),
+        });
+      }
+    }
+
+    const totalCount = matchingEntries.length;
+    const sortedAllNumbers = [...matchingEntries]
+      .sort((a, b) => a.number - b.number || a.code.localeCompare(b.code))
+      .map((item) => ({
+        number: item.number,
+        code: item.code,
+        title: item.title,
+        hasThumbnail: Boolean(item.thumbnail),
+      }));
+
+    const minNumber = sortedAllNumbers.length > 0 ? sortedAllNumbers[0].number : 0;
+    const maxNumber = sortedAllNumbers.length > 0 ? sortedAllNumbers[sortedAllNumbers.length - 1].number : 0;
+
+    // Filter
+    let filtered = matchingEntries;
+    if (options.q && options.q.trim()) {
+      const qLower = options.q.toLowerCase().trim();
+      filtered = filtered.filter(
+        (i) =>
+          i.code.toLowerCase().includes(qLower) ||
+          i.title.toLowerCase().includes(qLower) ||
+          (i.actressName && i.actressName.toLowerCase().includes(qLower)) ||
+          (i.studioName && i.studioName.toLowerCase().includes(qLower)) ||
+          String(i.number).includes(qLower)
+      );
+    }
+    if (typeof options.exactNum === "number" && !isNaN(options.exactNum)) {
+      filtered = filtered.filter((i) => i.number === options.exactNum);
+    }
+    if (typeof options.minNum === "number" && !isNaN(options.minNum)) {
+      filtered = filtered.filter((i) => i.number >= options.minNum!);
+    }
+    if (typeof options.maxNum === "number" && !isNaN(options.maxNum)) {
+      filtered = filtered.filter((i) => i.number <= options.maxNum!);
+    }
+
+    // Sort
+    const sortMode = options.sort || "number_asc";
+    if (sortMode === "number_desc") {
+      filtered.sort((a, b) => b.number - a.number || b.code.localeCompare(a.code));
+    } else if (sortMode === "latest") {
+      filtered.sort((a, b) => {
+        const timeA = new Date(a.addedAt || a.updatedAt || 0).getTime();
+        const timeB = new Date(b.addedAt || b.updatedAt || 0).getTime();
+        return timeB - timeA;
+      });
+    } else if (sortMode === "title") {
+      filtered.sort((a, b) => a.title.localeCompare(b.title));
+    } else {
+      // number_asc
+      filtered.sort((a, b) => a.number - b.number || a.code.localeCompare(b.code));
+    }
+
+    const totalFound = filtered.length;
+    const limit = Math.max(1, Math.min(200, options.limit || 50));
+    const totalPages = Math.ceil(totalFound / limit) || 1;
+    const page = Math.max(1, Math.min(totalPages, options.page || 1));
+    const startIndex = (page - 1) * limit;
+    const paginated = filtered.slice(startIndex, startIndex + limit);
+
+    return {
+      category: targetCat,
+      totalCount,
+      totalFound,
+      minNumber,
+      maxNumber,
+      allNumbers: sortedAllNumbers,
+      page,
+      totalPages,
+      limit,
+      sort: sortMode,
+      items: paginated,
+    };
   }
 
   /**
@@ -174,118 +610,145 @@ export class CodeRegistryService {
   }
 
   /**
-   * Atomically registers new codes into the master codes.json file on GitHub.
-   * Pulls the latest SHA first to prevent race conditions.
+   * Atomically registers new codes into the split index/codes/{PREFIX}.json files on GitHub.
+   * Pulls the latest SHA first for the specific prefix file to prevent race conditions.
    */
   async registerCodes(items: RegisterCodeItem[]): Promise<RegisterCodesResult> {
-    // Always force refresh to get latest state and SHA for atomic write
-    const { index: currentIndex, sha: currentSha } = await this.getOrLoadIndex(true);
-
     const registered: string[] = [];
     const duplicates: string[] = [];
     const invalid: string[] = [];
-
     const now = new Date().toISOString();
-    const updatedCodes: Record<string, CodeIndexSummary> = { ...currentIndex.codes };
 
+    const itemsByPrefix = new Map<string, RegisterCodeItem[]>();
     for (const item of items) {
       const normalized = normalizeCode(item.code);
       if (!normalized) {
         invalid.push(item.code);
         continue;
       }
-
-      if (updatedCodes[normalized]) {
-        duplicates.push(normalized);
+      const cat = getCodeCategory(normalized);
+      if (!cat) {
+        invalid.push(item.code);
         continue;
       }
-
-      // Add to index
-      updatedCodes[normalized] = {
-        code: normalized,
-        title: item.title,
-        postUrl: item.postUrl,
-        actressSlug: item.actressSlug,
-        actressName: item.actressName,
-        studioSlug: item.studioSlug,
-        studioName: item.studioName,
-        addedAt: now,
-      };
-      registered.push(normalized);
+      if (!itemsByPrefix.has(cat)) {
+        itemsByPrefix.set(cat, []);
+      }
+      itemsByPrefix.get(cat)!.push({ ...item, code: normalized });
     }
 
-    // If no new codes were registered, return early without touching GitHub
-    if (registered.length === 0) {
-      return {
-        success: true,
-        registered: [],
-        duplicates,
-        invalid,
-        totalCount: Object.keys(updatedCodes).length,
-      };
+    let lastCommitSha: string | undefined;
+
+    for (const [prefix, prefixItems] of itemsByPrefix.entries()) {
+      const { data: prefixIndex, sha: currentSha } = await this.loadPrefixIndex(prefix, true);
+      const itemsList = Array.isArray(prefixIndex.codes)
+        ? [...prefixIndex.codes]
+        : Array.isArray(prefixIndex.videos)
+        ? [...prefixIndex.videos]
+        : [];
+      const existingCodes = new Set(itemsList.map((v: any) => normalizeCode(v.code)));
+
+      let modified = false;
+
+      for (const item of prefixItems) {
+        if (existingCodes.has(item.code)) {
+          duplicates.push(item.code);
+          continue;
+        }
+
+        const newEntry = {
+          code: item.code,
+          title: item.title || item.code,
+          releaseDate: item.releaseDate || null,
+          thumbnail: item.thumbnail || null,
+          postUrl: item.postUrl || "",
+          ...(item.actressName ? { actress: { name: item.actressName, slug: item.actressSlug || normalizeSlug(item.actressName) } } : {}),
+          ...(item.studioName ? { studio: { name: item.studioName, slug: item.studioSlug || normalizeSlug(item.studioName) } } : {}),
+          addedAt: now,
+        };
+
+        itemsList.push(newEntry);
+        existingCodes.add(item.code);
+        registered.push(item.code);
+        modified = true;
+      }
+
+      if (modified) {
+        const updatedPrefixFile = {
+          prefix,
+          version: 1,
+          updatedAt: now,
+          totalCount: itemsList.length,
+          codes: itemsList,
+          videos: itemsList,
+        };
+
+        const indexPath = getCodeIndexPath(prefix);
+        const writeResult = await this.storage.writeFile(
+          indexPath,
+          updatedPrefixFile,
+          `[Code Registry] Register ${registered.length} code(s) under ${prefix}`,
+          currentSha || undefined
+        );
+
+        lastCommitSha = writeResult.sha;
+        this.prefixCache.set(prefix, { data: updatedPrefixFile, sha: writeResult.sha, fetchedAt: Date.now() });
+      }
     }
 
-    const updatedIndexFile: CodesIndexFile = {
-      version: currentIndex.version || 1,
-      updatedAt: now,
-      totalCount: Object.keys(updatedCodes).length,
-      codes: updatedCodes,
-    };
+    // Invalidate aggregated cache
+    this.cachedIndex = null;
+    this.lastFetchedAt = 0;
 
-    const commitMessage = `[Code Registry] Register ${registered.length} code(s): ${registered.slice(0, 3).join(", ")}${registered.length > 3 ? "..." : ""}`;
-
-    const writeResult = await this.storage.writeFile(
-      this.indexPath,
-      updatedIndexFile,
-      commitMessage,
-      currentSha || undefined
-    );
-
-    // Update local cache
-    this.cachedIndex = updatedIndexFile;
-    this.cachedSha = writeResult.sha;
-    this.lastFetchedAt = Date.now();
+    const stats = await this.getStats();
 
     return {
       success: true,
       registered,
       duplicates,
       invalid,
-      totalCount: updatedIndexFile.totalCount,
-      commitSha: writeResult.sha,
+      totalCount: stats.totalCount,
+      commitSha: lastCommitSha,
     };
   }
 
   /**
-   * Safely unregisters/removes a code (useful for test rollbacks or corrections).
+   * Safely unregisters/removes a code from its split prefix index file.
    */
   async unregisterCode(code: string): Promise<boolean> {
     const normalized = normalizeCode(code);
     if (!normalized) return false;
 
-    const { index: currentIndex, sha: currentSha } = await this.getOrLoadIndex(true);
-    if (!currentIndex.codes[normalized]) return false;
+    const cat = getCodeCategory(normalized);
+    if (!cat) return false;
 
-    const updatedCodes = { ...currentIndex.codes };
-    delete updatedCodes[normalized];
+    const { data: prefixIndex, sha: currentSha } = await this.loadPrefixIndex(cat, true);
+    const videosList = Array.isArray(prefixIndex.videos) ? prefixIndex.videos : [];
+    const filteredVideos = videosList.filter((v: any) => normalizeCode(v.code) !== normalized);
 
-    const updatedIndexFile: CodesIndexFile = {
-      version: currentIndex.version || 1,
+    if (filteredVideos.length === videosList.length) {
+      return false;
+    }
+
+    const updatedPrefixFile = {
+      prefix: cat,
+      version: 1,
       updatedAt: new Date().toISOString(),
-      totalCount: Object.keys(updatedCodes).length,
-      codes: updatedCodes,
+      totalCount: filteredVideos.length,
+      videos: filteredVideos,
     };
 
+    const indexPath = getCodeIndexPath(cat);
     const writeResult = await this.storage.writeFile(
-      this.indexPath,
-      updatedIndexFile,
+      indexPath,
+      updatedPrefixFile,
       `[Code Registry] Unregister code: ${normalized}`,
       currentSha || undefined
     );
 
-    this.cachedIndex = updatedIndexFile;
-    this.cachedSha = writeResult.sha;
-    this.lastFetchedAt = Date.now();
+    this.prefixCache.set(cat, { data: updatedPrefixFile, sha: writeResult.sha, fetchedAt: Date.now() });
+    this.cachedIndex = null;
+    this.lastFetchedAt = 0;
 
     return true;
   }

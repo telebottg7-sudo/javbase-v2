@@ -187,6 +187,7 @@ export class JavtifulScraper {
   async scrapeCatalogPage(page = 1, options?: { filterDuplicates?: boolean; enrichDetails?: boolean }): Promise<JavtifulScrapeResult> {
     const url = page > 1 ? `${this.primaryCatalogUrl}?page=${page}` : this.primaryCatalogUrl;
     const html = await this.fetchWithRetry(url);
+    const $ = cheerio.load(html);
     const items = this.parseCardsFromHtml(html);
 
     // Apply deduplication against CodeRegistryService
@@ -231,6 +232,7 @@ export class JavtifulScraper {
     }
 
     const filteredItems = options?.filterDuplicates ? items.filter((i) => !i.isDuplicate) : items;
+    const pagination = this.parsePagination($, page);
 
     return {
       source: url,
@@ -239,6 +241,7 @@ export class JavtifulScraper {
       uniqueCount: items.filter((i) => !i.isDuplicate).length,
       duplicateCount: items.filter((i) => i.isDuplicate).length,
       items: filteredItems,
+      pagination,
     };
   }
 
@@ -254,8 +257,12 @@ export class JavtifulScraper {
    * Search by keyword (actress name, release code, series title)
    */
   async searchByKeyword(keyword: string, page = 1, options?: { filterDuplicates?: boolean; enrichDetails?: boolean }): Promise<JavtifulScrapeResult> {
-    const searchUrl = `${this.baseUrl}/search?q=${encodeURIComponent(keyword.trim())}${page > 1 ? `&page=${page}` : ""}`;
+    const trimmed = keyword.trim();
+    const searchUrl = page > 1 
+      ? `${this.baseUrl}/search?page=${page}&q=${encodeURIComponent(trimmed)}`
+      : `${this.baseUrl}/search?q=${encodeURIComponent(trimmed)}`;
     const html = await this.fetchWithRetry(searchUrl);
+    const $ = cheerio.load(html);
     const items = this.parseCardsFromHtml(html);
 
     // Apply deduplication against CodeRegistryService
@@ -299,6 +306,7 @@ export class JavtifulScraper {
     }
 
     const filteredItems = options?.filterDuplicates ? items.filter((i) => !i.isDuplicate) : items;
+    const pagination = this.parsePagination($, page);
 
     return {
       source: searchUrl,
@@ -307,6 +315,7 @@ export class JavtifulScraper {
       uniqueCount: items.filter((i) => !i.isDuplicate).length,
       duplicateCount: items.filter((i) => i.isDuplicate).length,
       items: filteredItems,
+      pagination,
     };
   }
 
@@ -449,7 +458,7 @@ export class JavtifulScraper {
     let hasNext = false;
     let hasPrev = currentPage > 1;
 
-    $("nav.front-pagination a.front-pagination-link, .pagination a, nav a[href*=\"page=\"]").each((_, el) => {
+    $("nav.front-pagination a, .pagination a, nav a[href*=\"page=\"], ul.pagination li a, .page-item a, a.page-link, a[href*=\"page=\"]").each((_, el) => {
       const text = $(el).text().trim().toLowerCase();
       const href = $(el).attr("href") || "";
       const pageMatch = href.match(/page=(\d+)/i);
@@ -531,14 +540,18 @@ export class JavtifulScraper {
   /**
    * Scrapes videos for a specific actress
    */
-  async getActressVideos(actressSlug: string, page = 1): Promise<JavtifulScrapeResult> {
+  async getActressVideos(
+    actressSlug: string,
+    page = 1,
+    options?: { filterDuplicates?: boolean }
+  ): Promise<JavtifulScrapeResult> {
     const url = page > 1
       ? `${this.baseUrl}/actress/${actressSlug}?page=${page}`
       : `${this.baseUrl}/actress/${actressSlug}`;
 
     const html = await this.fetchWithRetry(url);
     const $ = cheerio.load(html);
-    const items = this.parseCardsFromHtml(html);
+    let items = this.parseCardsFromHtml(html);
 
     // Apply deduplication
     const codes = items.map((i) => i.code).filter(Boolean);
@@ -556,14 +569,22 @@ export class JavtifulScraper {
       }
     }
 
+    const totalFound = items.length;
+    const duplicateCount = items.filter((i) => i.isDuplicate).length;
+    const uniqueCount = totalFound - duplicateCount;
+
+    if (options?.filterDuplicates) {
+      items = items.filter((i) => !i.isDuplicate);
+    }
+
     const pagination = this.parsePagination($, page);
 
     return {
       source: url,
       page,
-      totalFound: items.length,
-      uniqueCount: items.filter((i) => !i.isDuplicate).length,
-      duplicateCount: items.filter((i) => i.isDuplicate).length,
+      totalFound,
+      uniqueCount,
+      duplicateCount,
       items,
       pagination,
     };
@@ -617,14 +638,18 @@ export class JavtifulScraper {
   /**
    * Scrapes videos for a specific studio/channel
    */
-  async getStudioVideos(studioSlug: string, page = 1): Promise<JavtifulScrapeResult> {
+  async getStudioVideos(
+    studioSlug: string,
+    page = 1,
+    options?: { filterDuplicates?: boolean }
+  ): Promise<JavtifulScrapeResult> {
     const url = page > 1
       ? `${this.baseUrl}/channel/${studioSlug}?page=${page}`
       : `${this.baseUrl}/channel/${studioSlug}`;
 
     const html = await this.fetchWithRetry(url);
     const $ = cheerio.load(html);
-    const items = this.parseCardsFromHtml(html);
+    let items = this.parseCardsFromHtml(html);
 
     // Apply deduplication
     const codes = items.map((i) => i.code).filter(Boolean);
@@ -642,14 +667,22 @@ export class JavtifulScraper {
       }
     }
 
+    const totalFound = items.length;
+    const duplicateCount = items.filter((i) => i.isDuplicate).length;
+    const uniqueCount = totalFound - duplicateCount;
+
+    if (options?.filterDuplicates) {
+      items = items.filter((i) => !i.isDuplicate);
+    }
+
     const pagination = this.parsePagination($, page);
 
     return {
       source: url,
       page,
-      totalFound: items.length,
-      uniqueCount: items.filter((i) => !i.isDuplicate).length,
-      duplicateCount: items.filter((i) => i.isDuplicate).length,
+      totalFound,
+      uniqueCount,
+      duplicateCount,
       items,
       pagination,
     };

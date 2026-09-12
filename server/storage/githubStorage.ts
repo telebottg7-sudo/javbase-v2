@@ -10,6 +10,8 @@ import {
   SelfTestStep,
   StoragePerformanceMetrics,
   PerformanceTestReport,
+  AutoCommitStatus,
+  UncommittedFileItem,
 } from "./types";
 import { StorageCache } from "./cache";
 import { WriteQueue } from "./writeQueue";
@@ -21,6 +23,20 @@ export class GitHubStorage {
   // Step 10: In-Memory Cache and Serialized Write Queue
   private cache: StorageCache;
   private writeQueue: WriteQueue;
+
+  // Auto-commit toggle and uncommitted files registry
+  private autoCommitEnabled = true;
+  private uncommittedFiles: Map<
+    string,
+    {
+      path: string;
+      content: string | object;
+      operation: "write" | "delete";
+      timestamp: string;
+      message: string;
+      sha?: string;
+    }
+  > = new Map();
 
   // Retry telemetry
   private retryStats = {
@@ -65,6 +81,77 @@ export class GitHubStorage {
 
   public getWriteQueue(): WriteQueue {
     return this.writeQueue;
+  }
+
+  public isAutoCommitEnabled(): boolean {
+    return this.autoCommitEnabled;
+  }
+
+  public setAutoCommit(enabled: boolean): void {
+    this.autoCommitEnabled = enabled;
+  }
+
+  public getUncommittedCount(): number {
+    return this.uncommittedFiles.size;
+  }
+
+  public getAutoCommitStatus(): AutoCommitStatus {
+    const filesArray = Array.from(this.uncommittedFiles.values());
+    return {
+      autoCommitEnabled: this.autoCommitEnabled,
+      uncommittedCount: filesArray.length,
+      uncommittedFiles: filesArray.map((f) => {
+        const text = typeof f.content === "string" ? f.content : JSON.stringify(f.content);
+        return {
+          path: f.path,
+          operation: f.operation,
+          timestamp: f.timestamp,
+          sizeBytes: Buffer.byteLength(text, "utf-8"),
+          message: f.message,
+        };
+      }),
+      lastModifiedAt:
+        filesArray.length > 0
+          ? filesArray[filesArray.length - 1].timestamp
+          : undefined,
+    };
+  }
+
+  public async commitAllPending(customMessage?: string): Promise<BatchCommitResult | null> {
+    if (this.uncommittedFiles.size === 0) {
+      return null;
+    }
+
+    const filesToCommit: BatchFileOperation[] = [];
+    const filesArray = Array.from(this.uncommittedFiles.values());
+    for (const item of filesArray) {
+      if (item.operation === "write") {
+        filesToCommit.push({
+          path: item.path,
+          content: item.content,
+        });
+      }
+    }
+
+    if (filesToCommit.length === 0) {
+      this.uncommittedFiles.clear();
+      return null;
+    }
+
+    const commitMsg =
+      customMessage ||
+      `[Manual Batch Commit] Committed ${filesToCommit.length} pending staged file(s) across Avdb database`;
+
+    const result = await this.batchCommit(filesToCommit, commitMsg, true);
+    this.uncommittedFiles.clear();
+    return result;
+  }
+
+  public discardPendingChanges(): { discardedCount: number } {
+    const discardedCount = this.uncommittedFiles.size;
+    this.uncommittedFiles.clear();
+    this.cache.clear();
+    return { discardedCount };
   }
 
   /**
@@ -243,6 +330,31 @@ export class GitHubStorage {
   ): Promise<ReadResult<T> | null> {
     const fullPath = this.resolvePath(path);
 
+    // 0. Check if staged in uncommitted files registry
+    if (this.uncommittedFiles.has(fullPath)) {
+      const staged = this.uncommittedFiles.get(fullPath)!;
+      if (staged.operation === "delete") {
+        return null;
+      }
+      const raw =
+        typeof staged.content === "string"
+          ? staged.content
+          : JSON.stringify(staged.content, null, 2);
+      let parsedData: unknown = raw;
+      try {
+        parsedData = typeof staged.content === "string" ? JSON.parse(staged.content) : staged.content;
+      } catch {
+        parsedData = staged.content;
+      }
+      return {
+        data: parsedData as T,
+        raw,
+        sha: staged.sha || "uncommitted-staged-sha",
+        path: fullPath,
+        fromCache: true,
+      };
+    }
+
     // 1. Check in-memory cache unless explicitly bypassed
     if (!bypassCache) {
       const cached = this.cache.get<T>(fullPath);
@@ -311,10 +423,47 @@ export class GitHubStorage {
     path: string,
     content: string | object,
     message: string,
-    existingSha?: string
+    existingSha?: string,
+    bypassAutoCommit = false
   ): Promise<WriteResult> {
+    const fullPath = this.resolvePath(path);
+
+    if (!this.autoCommitEnabled && !bypassAutoCommit) {
+      this.uncommittedFiles.set(fullPath, {
+        path: fullPath,
+        content,
+        operation: "write",
+        timestamp: new Date().toISOString(),
+        message,
+        sha: existingSha,
+      });
+
+      const textContent =
+        typeof content === "string" ? content : JSON.stringify(content, null, 2);
+      let parsedData: unknown = content;
+      if (typeof content === "string") {
+        try {
+          parsedData = JSON.parse(content);
+        } catch {
+          parsedData = content;
+        }
+      }
+
+      this.cache.set(fullPath, {
+        data: parsedData,
+        raw: textContent,
+        sha: existingSha || "uncommitted-sha",
+        path: fullPath,
+      });
+
+      return {
+        path: fullPath,
+        sha: existingSha || "uncommitted-sha",
+        commitSha: "staged-uncommitted",
+      };
+    }
+
     return this.writeQueue.enqueue(async () => {
-      const fullPath = this.resolvePath(path);
       const textContent =
         typeof content === "string" ? content : JSON.stringify(content, null, 2);
       const base64Content = Buffer.from(textContent, "utf-8").toString("base64");
@@ -378,10 +527,28 @@ export class GitHubStorage {
    * Delete a file from the repository.
    * Executed through the serialized WriteQueue and invalidates cache.
    */
-  public async deleteFile(path: string, message: string, sha?: string): Promise<boolean> {
-    return this.writeQueue.enqueue(async () => {
-      const fullPath = this.resolvePath(path);
+  public async deleteFile(
+    path: string,
+    message: string,
+    sha?: string,
+    bypassAutoCommit = false
+  ): Promise<boolean> {
+    const fullPath = this.resolvePath(path);
 
+    if (!this.autoCommitEnabled && !bypassAutoCommit) {
+      this.uncommittedFiles.set(fullPath, {
+        path: fullPath,
+        content: "",
+        operation: "delete",
+        timestamp: new Date().toISOString(),
+        message,
+        sha,
+      });
+      this.cache.invalidate(fullPath);
+      return true;
+    }
+
+    return this.writeQueue.enqueue(async () => {
       let targetSha = sha;
       if (!targetSha) {
         const file = await this.readFile(fullPath, true);
@@ -429,10 +596,48 @@ export class GitHubStorage {
    */
   public async batchCommit(
     files: BatchFileOperation[],
-    message: string
+    message: string,
+    bypassAutoCommit = false
   ): Promise<BatchCommitResult> {
     if (!files.length) {
       throw new Error("Cannot execute batchCommit with an empty file list.");
+    }
+
+    if (!this.autoCommitEnabled && !bypassAutoCommit) {
+      const now = new Date().toISOString();
+      for (const file of files) {
+        const fullPath = this.resolvePath(file.path);
+        this.uncommittedFiles.set(fullPath, {
+          path: fullPath,
+          content: file.content,
+          operation: "write",
+          timestamp: now,
+          message,
+        });
+        const text =
+          typeof file.content === "string" ? file.content : JSON.stringify(file.content, null, 2);
+        let parsed: unknown = file.content;
+        if (typeof file.content === "string") {
+          try {
+            parsed = JSON.parse(file.content);
+          } catch {
+            parsed = file.content;
+          }
+        }
+        this.cache.set(fullPath, {
+          data: parsed,
+          raw: text,
+          sha: "uncommitted-sha",
+          path: fullPath,
+        });
+      }
+
+      return {
+        commitSha: "staged-uncommitted",
+        treeSha: "staged-uncommitted-tree",
+        filesCommitted: files.length,
+        url: "",
+      };
     }
 
     return this.writeQueue.enqueue(async () => {

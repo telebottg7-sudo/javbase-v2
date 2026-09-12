@@ -13,6 +13,7 @@ export interface CodeIndexSummary {
   studioSlug?: string;
   studioName?: string;
   addedAt: string;
+  updatedAt?: string;
 }
 
 export interface CodesIndexFile {
@@ -78,6 +79,36 @@ export interface VideosIndexFile {
   updatedAt: string;
   totalCount: number;
   videos: VideoIndexEntry[];
+}
+
+// 4b. Index: Latest (database/index/latest.json)
+export interface LatestIndexEntry {
+  code: string;
+  title: string;
+  thumbnail?: string | null;
+  postUrl?: string | null;
+  releaseDate?: string | null;
+  addedAt?: string;
+  updatedAt?: string;
+  actress?: { name: string; slug: string } | null;
+  studio?: { name: string; slug: string } | null;
+}
+
+export interface LatestIndexFile {
+  version: number;
+  updatedAt: string;
+  totalCount: number;
+  videos: LatestIndexEntry[];
+}
+
+// 4c. Index: Stats (database/index/stats.json)
+export interface StatsIndexFile {
+  version: number;
+  updatedAt: string;
+  totalVideos: number;
+  totalActresses: number;
+  totalStudios: number;
+  totalCodes: number;
 }
 
 // 5. Entity: Actress (database/pstar/{letter}/{slug}.json)

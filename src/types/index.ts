@@ -9,6 +9,11 @@ export type NavView =
   | 'maintenance'
   | 'system-tests';
 
+export interface NavParams {
+  query?: string;
+  tab?: "bulk" | "catalog" | "search" | "actresses" | "studios";
+}
+
 export interface NavItem {
   id: NavView;
   label: string;
@@ -138,6 +143,50 @@ export interface CodeSummary {
   addedAt: string;
 }
 
+export interface CodeCategorySummary {
+  category: string;
+  totalCount: number;
+  minNumber: number;
+  maxNumber: number;
+  numberRangeFormatted: string;
+  sampleCodes: string[];
+  sampleNumbers: number[];
+  topActresses: Array<{ name: string; count: number }>;
+  topStudios: Array<{ name: string; count: number }>;
+  sampleThumbnails: string[];
+  lastAddedAt: string;
+}
+
+export interface CategoryNumberItem {
+  code: string;
+  number: number;
+  numberFormatted: string;
+  title: string;
+  postUrl: string;
+  thumbnail?: string;
+  actressName?: string;
+  actressSlug?: string;
+  studioName?: string;
+  studioSlug?: string;
+  duration?: string;
+  releaseDate?: string;
+  addedAt: string;
+}
+
+export interface CategoryDetailsResult {
+  category: string;
+  totalCount: number;
+  totalFound: number;
+  minNumber: number;
+  maxNumber: number;
+  allNumbers: Array<{ number: number; code: string; title?: string; hasThumbnail?: boolean }>;
+  page: number;
+  totalPages: number;
+  limit: number;
+  sort: string;
+  items: CategoryNumberItem[];
+}
+
 export interface CodeCheckResult {
   rawCode: string;
   normalizedCode: string | null;
@@ -199,6 +248,15 @@ export interface JavtifulStudioItem {
   thumbnail?: string;
 }
 
+export interface JavtifulPagination {
+  currentPage: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+  nextPage?: number;
+  prevPage?: number;
+}
+
 export interface JavtifulScrapeResult {
   source: string;
   page: number;
@@ -206,6 +264,7 @@ export interface JavtifulScrapeResult {
   uniqueCount: number;
   duplicateCount: number;
   items: JavtifulVideoItem[];
+  pagination?: JavtifulPagination;
 }
 
 export interface JavtifulTestStep {
@@ -245,6 +304,22 @@ export interface BatchIngestionResult {
   studiosTouched: string[];
   results: IngestionResult[];
   durationMs: number;
+}
+
+export interface SaveActressResult {
+  success: boolean;
+  actressSlug: string;
+  actressName: string;
+  isNewActress: boolean;
+  totalVideosSubmitted: number;
+  ingestedCount: number;
+  duplicateCount: number;
+  totalActressVideos: number;
+  commitSha?: string;
+  commitUrl?: string;
+  modifiedFiles?: string[];
+  isSingleCommit: boolean;
+  error?: string;
 }
 
 export interface Step6TestReport {
@@ -531,6 +606,21 @@ export interface Step11TestReport {
     details?: unknown;
   }>;
   finalDiagnosticReport?: MaintenanceReport;
+}
+
+export interface UncommittedFileItem {
+  path: string;
+  operation: "write" | "delete";
+  timestamp: string;
+  sizeBytes?: number;
+  message?: string;
+}
+
+export interface AutoCommitStatus {
+  autoCommitEnabled: boolean;
+  uncommittedCount: number;
+  uncommittedFiles: UncommittedFileItem[];
+  lastModifiedAt?: string;
 }
 
 

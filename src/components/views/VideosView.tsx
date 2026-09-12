@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { VideoCatalogItem, NavView } from "../../types";
 import { MediaHarvesterModal } from "../modals/MediaHarvesterModal";
+import { DatabasePagination } from "../common/DatabasePagination";
+import { fetchWithRetry } from "../../utils/fetchWithRetry";
 
 interface VideosViewProps {
   onNavigate?: (view: NavView) => void;
@@ -55,7 +57,8 @@ export const VideosView: React.FC<VideosViewProps> = ({ onNavigate }) => {
       if (actress.trim()) params.append("actress", actress.trim());
       if (studio.trim()) params.append("studio", studio.trim());
 
-      const res = await fetch(`/api/videos?${params.toString()}`);
+      const res = await fetchWithRetry(`/api/videos?${params.toString()}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setVideos(data.videos || []);
       setTotalPages(data.totalPages || 1);
@@ -222,10 +225,21 @@ export const VideosView: React.FC<VideosViewProps> = ({ onNavigate }) => {
         </div>
       ) : (
         <div className="space-y-4">
+          {/* Top Pagination */}
+          <DatabasePagination
+            idPrefix="videos-db-pagination-top"
+            currentPage={page}
+            totalPages={totalPages}
+            totalItems={totalFound}
+            itemsPerPage={24}
+            loading={loading}
+            onPageChange={(targetPage) => fetchVideos(targetPage, searchQuery, actressFilter, studioFilter)}
+          />
+
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {videos.map((vid, idx) => (
               <div
-                key={vid.code || idx}
+                key={`${vid.code || 'video'}-${idx}`}
                 onClick={() => setSelectedVideo(vid)}
                 className="bg-white border border-neutral-200 hover:border-neutral-400 rounded-xl overflow-hidden shadow-xs hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between group"
               >
@@ -311,30 +325,16 @@ export const VideosView: React.FC<VideosViewProps> = ({ onNavigate }) => {
             ))}
           </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-4 border-t border-neutral-200 text-xs">
-              <span className="text-neutral-500">
-                Page {page} of {totalPages} ({totalFound} videos)
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => fetchVideos(page - 1, searchQuery, actressFilter, studioFilter)}
-                  disabled={page <= 1}
-                  className="px-3 py-1.5 rounded-lg border border-neutral-300 disabled:opacity-50 hover:bg-neutral-50 text-neutral-700 font-medium"
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => fetchVideos(page + 1, searchQuery, actressFilter, studioFilter)}
-                  disabled={page >= totalPages}
-                  className="px-3 py-1.5 rounded-lg border border-neutral-300 disabled:opacity-50 hover:bg-neutral-50 text-neutral-700 font-medium"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Bottom Pagination */}
+          <DatabasePagination
+            idPrefix="videos-db-pagination-bottom"
+            currentPage={page}
+            totalPages={totalPages}
+            totalItems={totalFound}
+            itemsPerPage={24}
+            loading={loading}
+            onPageChange={(targetPage) => fetchVideos(targetPage, searchQuery, actressFilter, studioFilter)}
+          />
         </div>
       )}
 

@@ -23,7 +23,9 @@ import {
   ShardedStudioEntity,
   NavView,
 } from "../../types";
+import { fetchWithRetry } from "../../utils/fetchWithRetry";
 import { MediaHarvesterModal } from "../modals/MediaHarvesterModal";
+import { DatabasePagination } from "../common/DatabasePagination";
 
 export type EntityType = "actress" | "studio";
 
@@ -107,7 +109,7 @@ export const EntityCatalogView: React.FC<EntityCatalogViewProps> = ({
       if (letter !== "all") params.append("letter", letter);
       if (query.trim()) params.append("q", query.trim());
 
-      const res = await fetch(`${config.apiBase}?${params.toString()}`);
+      const res = await fetchWithRetry(`${config.apiBase}?${params.toString()}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const list = isActress ? data.actresses : data.studios;
@@ -283,11 +285,22 @@ export const EntityCatalogView: React.FC<EntityCatalogViewProps> = ({
         </div>
       ) : (
         <div className="space-y-4">
+          {/* Top Pagination */}
+          <DatabasePagination
+            idPrefix={`${entityType}-db-pagination-top`}
+            currentPage={page}
+            totalPages={totalPages}
+            totalItems={totalCount}
+            itemsPerPage={36}
+            loading={loading}
+            onPageChange={(targetPage) => fetchEntities(targetPage, selectedLetter, searchQuery)}
+          />
+
           {/* 2 columns on mobile, 3 columns on other displays */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 sm:gap-5 lg:gap-6">
-            {entities.map((item) => (
+            {entities.map((item, idx) => (
               <div
-                key={item.slug}
+                key={`${item.slug}-${idx}`}
                 id={`${entityType}-card-${item.slug}`}
                 onClick={() => handleOpenDetail(item)}
                 role="button"
@@ -334,30 +347,16 @@ export const EntityCatalogView: React.FC<EntityCatalogViewProps> = ({
             ))}
           </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-4 border-t border-neutral-200 text-xs">
-              <span className="text-neutral-500">
-                Page {page} of {totalPages}
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  disabled={page <= 1 || loading}
-                  onClick={() => fetchEntities(page - 1, selectedLetter, searchQuery)}
-                  className="px-3 py-1.5 rounded-lg border border-neutral-300 disabled:opacity-50 hover:bg-neutral-50 text-neutral-700 font-medium transition-colors"
-                >
-                  Previous
-                </button>
-                <button
-                  disabled={page >= totalPages || loading}
-                  onClick={() => fetchEntities(page + 1, selectedLetter, searchQuery)}
-                  className="px-3 py-1.5 rounded-lg border border-neutral-300 disabled:opacity-50 hover:bg-neutral-50 text-neutral-700 font-medium transition-colors"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Bottom Pagination */}
+          <DatabasePagination
+            idPrefix={`${entityType}-db-pagination-bottom`}
+            currentPage={page}
+            totalPages={totalPages}
+            totalItems={totalCount}
+            itemsPerPage={36}
+            loading={loading}
+            onPageChange={(targetPage) => fetchEntities(targetPage, selectedLetter, searchQuery)}
+          />
         </div>
       )}
 

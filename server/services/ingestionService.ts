@@ -1,10 +1,15 @@
 import { GitHubStorage } from "../storage/githubStorage";
 import { CodeRegistryService } from "./codeRegistry";
+import fs from "fs/promises";
+import path from "path";
 import {
   CodesIndexFile,
   ActressesIndexFile,
   StudiosIndexFile,
   VideosIndexFile,
+  LatestIndexFile,
+  LatestIndexEntry,
+  StatsIndexFile,
   ActressEntity,
   StudioEntity,
   VideoIndexEntry,
@@ -75,6 +80,48 @@ export interface BatchIngestionResult {
   isSingleCommit?: boolean;
 }
 
+export interface SaveActressInput {
+  slug: string;
+  name: string;
+  thumbnail?: string;
+  videoCount?: number;
+  bio?: string;
+  measurements?: string;
+  birthdate?: string;
+  aliases?: string[];
+  videos?: Array<{
+    code: string;
+    title: string;
+    postUrl: string;
+    thumbnail?: string;
+    coverImage?: string;
+    actress?: string;
+    actressSlug?: string;
+    studio?: string;
+    studioSlug?: string;
+    duration?: string;
+    releaseDate?: string;
+  }>;
+  filterDuplicates?: boolean;
+  commitMessage?: string;
+}
+
+export interface SaveActressResult {
+  success: boolean;
+  actressSlug: string;
+  actressName: string;
+  isNewActress: boolean;
+  totalVideosSubmitted: number;
+  ingestedCount: number;
+  duplicateCount: number;
+  totalActressVideos: number;
+  commitSha?: string;
+  commitUrl?: string;
+  modifiedFiles?: string[];
+  isSingleCommit: boolean;
+  error?: string;
+}
+
 export interface DatabaseStats {
   totalCodes: number;
   totalVideos: number;
@@ -90,6 +137,8 @@ export class IngestionService {
   private readonly videosIndexPath = "index/videos.json";
   private readonly actressesIndexPath = "index/actresses.json";
   private readonly studiosIndexPath = "index/studios.json";
+  private readonly latestIndexPath = "index/latest.json";
+  private readonly statsIndexPath = "index/stats.json";
 
   // In-memory cache for master indexes
   private cachedVideos: VideosIndexFile | null = null;
@@ -103,6 +152,92 @@ export class IngestionService {
   constructor(storage: GitHubStorage, codeRegistry: CodeRegistryService) {
     this.storage = storage;
     this.codeRegistry = codeRegistry;
+  }
+
+  /**
+   * Builds updated latest.json and stats.json objects from current state.
+   */
+  private async createLatestAndStatsIndex(
+    newVideoEntries: Array<{
+      code: string;
+      title: string;
+      thumbnail?: string;
+      postUrl: string;
+      releaseDate?: string;
+      addedAt?: string;
+      actressName?: string;
+      actressSlug?: string;
+      studioName?: string;
+      studioSlug?: string;
+    }>,
+    totalVideosCount: number,
+    totalActressesCount: number,
+    totalStudiosCount: number,
+    now: string
+  ): Promise<{ latestIndex: LatestIndexFile; statsIndex: StatsIndexFile }> {
+    let currentLatest: LatestIndexEntry[] = [];
+    try {
+      const latestFile = await this.storage.readFile<LatestIndexFile>(this.latestIndexPath);
+      if (latestFile?.data?.videos && Array.isArray(latestFile.data.videos)) {
+        currentLatest = latestFile.data.videos;
+      }
+    } catch {}
+
+    for (const v of newVideoEntries) {
+      const normCode = normalizeCode(v.code) || v.code;
+      const newEntry: LatestIndexEntry = {
+        code: normCode,
+        title: v.title,
+        thumbnail: v.thumbnail || null,
+        postUrl: v.postUrl || null,
+        releaseDate: v.releaseDate || null,
+        addedAt: v.addedAt || now,
+        actress: v.actressSlug && v.actressName ? { name: v.actressName, slug: v.actressSlug } : (v.actressName ? { name: v.actressName, slug: normalizeSlug(v.actressName) } : null),
+        studio: v.studioSlug && v.studioName ? { name: v.studioName, slug: v.studioSlug } : (v.studioName ? { name: v.studioName, slug: normalizeSlug(v.studioName) } : null),
+      };
+
+      currentLatest = [
+        newEntry,
+        ...currentLatest.filter((item) => normalizeCode(item.code || "") !== normCode),
+      ];
+    }
+
+    currentLatest = currentLatest.slice(0, 100);
+
+    const latestIndex: LatestIndexFile = {
+      version: 1,
+      updatedAt: now,
+      totalCount: totalVideosCount,
+      videos: currentLatest,
+    };
+
+    const statsIndex: StatsIndexFile = {
+      version: 1,
+      updatedAt: now,
+      totalVideos: totalVideosCount,
+      totalActresses: totalActressesCount,
+      totalStudios: totalStudiosCount,
+      totalCodes: totalVideosCount,
+    };
+
+    return { latestIndex, statsIndex };
+  }
+
+  /**
+   * Mirror all files to local filesystem database/ directory
+   */
+  private async saveLocalDiskFiles(files: Array<{ path: string; content: string | object }>): Promise<void> {
+    const dbDir = path.join(process.cwd(), "database");
+    for (const f of files) {
+      try {
+        const fullPath = path.join(dbDir, f.path);
+        await fs.mkdir(path.dirname(fullPath), { recursive: true });
+        const str = typeof f.content === "string" ? f.content : JSON.stringify(f.content, null, 2);
+        await fs.writeFile(fullPath, str, "utf-8");
+      } catch (err) {
+        console.warn(`[Local Sync] Error writing local file ${f.path}:`, err);
+      }
+    }
   }
 
   /**
@@ -472,16 +607,47 @@ export class IngestionService {
         studios: studiosIdx.studios,
       };
       filesToCommit.push({ path: this.studiosIndexPath, content: updatedStudiosIdx });
+    } else {
+      filesToCommit.push({ path: this.studiosIndexPath, content: studiosIdx });
     }
+
+    // Ensure actresses master index is in filesToCommit
+    filesToCommit.push({ path: this.actressesIndexPath, content: actressesIdx });
 
     const codePath = getCodeFilePath(normalizedCode);
     if (codePath) {
       filesToCommit.push({ path: codePath, content: videoEntry });
     }
 
+    // Build latest.json & stats.json
+    const { latestIndex, statsIndex } = await this.createLatestAndStatsIndex(
+      [{
+        code: normalizedCode,
+        title: item.title,
+        thumbnail,
+        postUrl: item.postUrl,
+        releaseDate: item.releaseDate,
+        addedAt: now,
+        actressName: actressName || undefined,
+        actressSlug: actressSlug || undefined,
+        studioName: studioName || undefined,
+        studioSlug: studioSlug || undefined,
+      }],
+      updatedVideosList.length,
+      actressesIdx.actresses.length,
+      studiosIdx.studios.length,
+      now
+    );
+
+    filesToCommit.push({ path: this.latestIndexPath, content: latestIndex });
+    filesToCommit.push({ path: this.statsIndexPath, content: statsIndex });
+
     // 4. Commit all files using atomic batch commit
     const commitMsg = `[Ingest] Ingest video ${normalizedCode} (${item.title.substring(0, 50)})`;
     await this.storage.batchCommit(filesToCommit, commitMsg);
+
+    this.storage.purgeCache("index");
+    await this.saveLocalDiskFiles(filesToCommit);
 
     // 5. Register code with CodeRegistryService
     await this.codeRegistry.registerCodes([
@@ -850,20 +1016,16 @@ export class IngestionService {
     // 6. Assemble files for ONE ATOMIC BATCH COMMIT
     const filesToCommit: Array<{ path: string; content: string | object }> = [
       { path: this.videosIndexPath, content: updatedVideosIdx },
+      { path: this.actressesIndexPath, content: updatedActressesIdx },
+      { path: this.studiosIndexPath, content: updatedStudiosIdx },
     ];
 
-    if (actressEntityMap.size > 0) {
-      filesToCommit.push({ path: this.actressesIndexPath, content: updatedActressesIdx });
-      for (const [slug, { entity }] of actressEntityMap.entries()) {
-        filesToCommit.push({ path: getActressPath(slug), content: entity });
-      }
+    for (const [slug, { entity }] of actressEntityMap.entries()) {
+      filesToCommit.push({ path: getActressPath(slug), content: entity });
     }
 
-    if (studioEntityMap.size > 0) {
-      filesToCommit.push({ path: this.studiosIndexPath, content: updatedStudiosIdx });
-      for (const [slug, { entity }] of studioEntityMap.entries()) {
-        filesToCommit.push({ path: getStudioPath(slug), content: entity });
-      }
+    for (const [slug, { entity }] of studioEntityMap.entries()) {
+      filesToCommit.push({ path: getStudioPath(slug), content: entity });
     }
 
     for (const videoEntry of newVideoEntries) {
@@ -875,11 +1037,39 @@ export class IngestionService {
       }
     }
 
+    // Prepare latest.json & stats.json
+    const videoItemsForLatest = newVideoEntries.map((v) => ({
+      code: v.code,
+      title: v.title,
+      thumbnail: v.thumbnail,
+      postUrl: v.postUrl,
+      releaseDate: v.releaseDate,
+      addedAt: now,
+      actressName: v.actressName,
+      actressSlug: v.actressSlug,
+      studioName: v.studioName,
+      studioSlug: v.studioSlug,
+    }));
+
+    const { latestIndex, statsIndex } = await this.createLatestAndStatsIndex(
+      videoItemsForLatest,
+      updatedVideosList.length,
+      updatedActressesIdx.actresses.length,
+      updatedStudiosIdx.studios.length,
+      now
+    );
+
+    filesToCommit.push({ path: this.latestIndexPath, content: latestIndex });
+    filesToCommit.push({ path: this.statsIndexPath, content: statsIndex });
+
     // 7. Execute single batch commit (STOP RULE: Exactly 1 commit for all changes)
     const commitMsg =
       options?.commitMessage ||
       `[Bulk Ingestion] Batch ingested ${newItemsToIngest.length} videos in single transaction`;
     const commitResult = await this.storage.batchCommit(filesToCommit, commitMsg);
+
+    this.storage.purgeCache("index");
+    await this.saveLocalDiskFiles(filesToCommit);
 
     // 8. Register codes with CodeRegistryService
     await this.codeRegistry.registerCodes(newCodeRegistryEntries);
@@ -915,6 +1105,335 @@ export class IngestionService {
    */
   async ingestBatch(items: IngestVideoInput[]): Promise<BatchIngestionResult> {
     return this.bulkIngestTransaction(items);
+  }
+
+  /**
+   * Saves an actress profile entity along with her scraped video catalog into the sharded database.
+   * Supports filtering out duplicate videos, updating master indexes, and atomic GitHub commits.
+   */
+  async saveActressWithVideos(input: SaveActressInput): Promise<SaveActressResult> {
+    const rawSlug = (input.slug || input.name || "").trim();
+    const cleanSlug = normalizeSlug(rawSlug);
+    const actressName = (input.name || input.slug || "").trim();
+
+    if (!cleanSlug || !actressName) {
+      return {
+        success: false,
+        actressSlug: cleanSlug,
+        actressName,
+        isNewActress: false,
+        totalVideosSubmitted: 0,
+        ingestedCount: 0,
+        duplicateCount: 0,
+        totalActressVideos: 0,
+        isSingleCommit: true,
+        error: "Missing or invalid actress slug/name",
+      };
+    }
+
+    const now = new Date().toISOString();
+    const filterDuplicates = input.filterDuplicates !== false;
+    const submittedVideos = Array.isArray(input.videos) ? input.videos : [];
+
+    // 1. Fetch actress entity (or initialize)
+    let actressEntity = await this.getActressEntity(cleanSlug);
+    const isNew = !actressEntity;
+    if (!actressEntity) {
+      actressEntity = createInitialActressEntity(actressName);
+      actressEntity.slug = cleanSlug;
+      actressEntity.letter = getShardLetter(cleanSlug);
+    }
+
+    actressEntity.name = actressName || actressEntity.name;
+    if (input.thumbnail) {
+      actressEntity.thumbnail = input.thumbnail;
+    }
+    if (input.bio !== undefined) {
+      actressEntity.bio = input.bio;
+    }
+    if (input.measurements !== undefined) {
+      actressEntity.measurements = input.measurements;
+    }
+    if (input.birthdate !== undefined) {
+      actressEntity.birthdate = input.birthdate;
+    }
+    if (input.aliases && Array.isArray(input.aliases)) {
+      actressEntity.aliases = input.aliases;
+    }
+
+    // 2. Process submitted videos
+    const rawCodes = submittedVideos.map((v) => normalizeCode(v.code)).filter(Boolean) as string[];
+    const dedupResults = await this.codeRegistry.checkBatch(rawCodes);
+    const dedupMap = new Map(dedupResults.map((r) => [r.normalizedCode, r]));
+
+    const videosIdx = await this.getVideosIndex(true);
+    const studiosIdx = await this.getStudiosIndex(true);
+    const actressesIdx = await this.getActressesIndex(true);
+
+    const studioEntityMap = new Map<string, { entity: StudioEntity; isNew: boolean }>();
+    const newVideoEntries: VideoIndexEntry[] = [];
+    const newCodeRegistryEntries: Array<{
+      code: string;
+      title?: string;
+      postUrl?: string;
+      actressName?: string;
+      actressSlug?: string;
+      studioName?: string;
+      studioSlug?: string;
+    }> = [];
+
+    let ingestedCount = 0;
+    let duplicateCount = 0;
+
+    for (const item of submittedVideos) {
+      const normalizedCode = normalizeCode(item.code);
+      if (!normalizedCode) continue;
+
+      const check = dedupMap.get(normalizedCode);
+      const isDuplicate = check?.isDuplicate ?? false;
+
+      if (isDuplicate) {
+        duplicateCount++;
+        if (filterDuplicates) {
+          // Skip duplicate item when filterDuplicates is enabled
+          continue;
+        }
+      }
+
+      const thumbnail = item.coverImage || item.thumbnail || "";
+      const studioName = (item.studio || "").trim();
+      const studioSlug = item.studioSlug || (studioName ? normalizeSlug(studioName) : "");
+
+      // Video index entry
+      const videoEntry: VideoIndexEntry = {
+        code: normalizedCode,
+        title: item.title,
+        thumbnail,
+        postUrl: item.postUrl,
+        actressSlug: cleanSlug,
+        actressName,
+        studioSlug: studioSlug || undefined,
+        studioName: studioName || undefined,
+        duration: item.duration,
+        releaseDate: item.releaseDate,
+        scrapedAt: now,
+      };
+      newVideoEntries.push(videoEntry);
+
+      // Actress video entry
+      const actressVideoItem: ActressEntityVideo = {
+        code: normalizedCode,
+        title: item.title,
+        thumbnail,
+        postUrl: item.postUrl,
+        studioSlug: studioSlug || undefined,
+        studioName: studioName || undefined,
+        releaseDate: item.releaseDate,
+        addedAt: now,
+      };
+
+      const existingVidIdx = actressEntity.videos.findIndex(
+        (v) => normalizeCode(v.code || "") === normalizedCode
+      );
+      if (existingVidIdx >= 0) {
+        actressEntity.videos[existingVidIdx] = actressVideoItem;
+      } else {
+        actressEntity.videos.unshift(actressVideoItem);
+      }
+
+      // Studio handling if studio is present
+      if (studioSlug && studioName) {
+        let studioTracked = studioEntityMap.get(studioSlug);
+        if (!studioTracked) {
+          const existingStudio = await this.getStudioEntity(studioSlug);
+          if (existingStudio) {
+            studioTracked = { entity: existingStudio, isNew: false };
+          } else {
+            const newStudio = createInitialStudioEntity(studioName);
+            newStudio.slug = studioSlug;
+            studioTracked = { entity: newStudio, isNew: true };
+          }
+          studioEntityMap.set(studioSlug, studioTracked);
+        }
+
+        const studioVideoItem: StudioEntityVideo = {
+          code: normalizedCode,
+          title: item.title,
+          thumbnail,
+          postUrl: item.postUrl,
+          actressSlug: cleanSlug,
+          actressName,
+          releaseDate: item.releaseDate,
+          addedAt: now,
+        };
+
+        const existingStudioVidIdx = studioTracked.entity.videos.findIndex(
+          (v) => normalizeCode(v.code || "") === normalizedCode
+        );
+        if (existingStudioVidIdx >= 0) {
+          studioTracked.entity.videos[existingStudioVidIdx] = studioVideoItem;
+        } else {
+          studioTracked.entity.videos.unshift(studioVideoItem);
+        }
+        studioTracked.entity.videoCount = studioTracked.entity.videos.length;
+        if (!studioTracked.entity.thumbnail && thumbnail) {
+          studioTracked.entity.thumbnail = thumbnail;
+        }
+        studioTracked.entity.updatedAt = now;
+      }
+
+      // Code registry entry
+      newCodeRegistryEntries.push({
+        code: normalizedCode,
+        title: item.title,
+        postUrl: item.postUrl,
+        actressName,
+        actressSlug: cleanSlug,
+        studioName: studioName || undefined,
+        studioSlug: studioSlug || undefined,
+      });
+
+      ingestedCount++;
+    }
+
+    // Update actress entity metadata
+    actressEntity.videoCount = actressEntity.videos.length;
+    if (!actressEntity.thumbnail && submittedVideos[0]?.coverImage) {
+      actressEntity.thumbnail = submittedVideos[0].coverImage;
+    }
+    actressEntity.updatedAt = now;
+
+    // 3. Assemble files for atomic commit
+    const filesToCommit: Array<{ path: string; content: string | object }> = [
+      { path: getActressPath(cleanSlug), content: actressEntity },
+    ];
+
+    // Master Actress Index update
+    const existingActressIdx = actressesIdx.actresses.findIndex((a) => a.slug === cleanSlug);
+    const actressSummaryEntry: ActressIndexEntry = {
+      slug: cleanSlug,
+      name: actressName,
+      letter: getShardLetter(cleanSlug),
+      path: getActressPath(cleanSlug),
+      thumbnail: actressEntity.thumbnail,
+      videoCount: actressEntity.videoCount,
+      updatedAt: now,
+    };
+
+    if (existingActressIdx >= 0) {
+      actressesIdx.actresses[existingActressIdx] = actressSummaryEntry;
+    } else {
+      actressesIdx.actresses.unshift(actressSummaryEntry);
+    }
+    const updatedActressesIdx: ActressesIndexFile = {
+      version: 1,
+      updatedAt: now,
+      totalCount: actressesIdx.actresses.length,
+      actresses: actressesIdx.actresses,
+    };
+    filesToCommit.push({ path: this.actressesIndexPath, content: updatedActressesIdx });
+
+    // Videos master index and individual code files if new videos were ingested
+    if (newVideoEntries.length > 0) {
+      const newNormCodesSet = new Set(newVideoEntries.map((v) => normalizeCode(v.code || "")));
+      const filteredExistingVideos = videosIdx.videos.filter(
+        (v) => !newNormCodesSet.has(normalizeCode(v.code || ""))
+      );
+      const updatedVideosList = [...newVideoEntries, ...filteredExistingVideos];
+      const updatedVideosIdx: VideosIndexFile = {
+        version: 1,
+        updatedAt: now,
+        totalCount: updatedVideosList.length,
+        videos: updatedVideosList,
+      };
+      filesToCommit.push({ path: this.videosIndexPath, content: updatedVideosIdx });
+
+      for (const videoEntry of newVideoEntries) {
+        if (videoEntry.code) {
+          const codePath = getCodeFilePath(videoEntry.code);
+          if (codePath) {
+            filesToCommit.push({ path: codePath, content: videoEntry });
+          }
+        }
+      }
+    }
+
+    const updatedStudiosIdx: StudiosIndexFile = {
+      version: 1,
+      updatedAt: now,
+      totalCount: studiosIdx.studios.length,
+      studios: studiosIdx.studios,
+    };
+    filesToCommit.push({ path: this.studiosIndexPath, content: updatedStudiosIdx });
+
+    const totalVideosCount = videosIdx.videos.length + newVideoEntries.length;
+
+    // Prepare latest.json & stats.json
+    const videoItemsForLatest = newVideoEntries.map((v) => ({
+      code: v.code,
+      title: v.title,
+      thumbnail: v.thumbnail,
+      postUrl: v.postUrl,
+      releaseDate: v.releaseDate,
+      addedAt: now,
+      actressName: v.actressName,
+      actressSlug: v.actressSlug,
+      studioName: v.studioName,
+      studioSlug: v.studioSlug,
+    }));
+
+    const { latestIndex, statsIndex } = await this.createLatestAndStatsIndex(
+      videoItemsForLatest,
+      totalVideosCount,
+      updatedActressesIdx.actresses.length,
+      updatedStudiosIdx.studios.length,
+      now
+    );
+
+    filesToCommit.push({ path: this.latestIndexPath, content: latestIndex });
+    filesToCommit.push({ path: this.statsIndexPath, content: statsIndex });
+
+    // 4. Batch commit (STOP RULE: Exactly 1 single commit for all updates)
+    const commitMsg =
+      input.commitMessage ||
+      `[Actress Ingestion] Saved ${actressName} (${cleanSlug}) with ${ingestedCount} videos (${duplicateCount} duplicates filtered) in single transaction`;
+    const commitResult = await this.storage.batchCommit(filesToCommit, commitMsg);
+
+    this.storage.purgeCache("index");
+    await this.saveLocalDiskFiles(filesToCommit);
+
+    // 5. Register codes
+    if (newCodeRegistryEntries.length > 0) {
+      await this.codeRegistry.registerCodes(newCodeRegistryEntries);
+    }
+
+    // 6. Update cache
+    this.cachedActresses = updatedActressesIdx;
+    if (newVideoEntries.length > 0) {
+      this.cachedVideos = {
+        version: 1,
+        updatedAt: now,
+        totalCount: videosIdx.videos.length + newVideoEntries.length,
+        videos: [...newVideoEntries, ...videosIdx.videos],
+      };
+    }
+    this.lastActressesFetchedAt = Date.now();
+    this.lastVideosFetchedAt = Date.now();
+
+    return {
+      success: true,
+      actressSlug: cleanSlug,
+      actressName,
+      isNewActress: isNew,
+      totalVideosSubmitted: submittedVideos.length,
+      ingestedCount,
+      duplicateCount,
+      totalActressVideos: actressEntity.videos.length,
+      commitSha: commitResult.commitSha,
+      commitUrl: commitResult.url,
+      modifiedFiles: filesToCommit.map((f) => f.path),
+      isSingleCommit: true,
+    };
   }
 
   /**

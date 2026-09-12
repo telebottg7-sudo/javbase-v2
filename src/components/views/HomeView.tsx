@@ -6,7 +6,9 @@ import {
   DatabaseStatusReport,
   StoragePerformanceMetrics,
   Step10PerformanceReport,
+  AutoCommitStatus,
 } from "../../types";
+import { fetchWithRetry } from "../../utils/fetchWithRetry";
 import {
   Search,
   Layers,
@@ -24,9 +26,30 @@ import {
   Zap,
   Trash2,
   Wrench,
+  Calendar,
+  Sparkles,
+  ExternalLink,
 } from "lucide-react";
-import { DatabaseTopologyGraphic } from "../home/DatabaseTopologyGraphic";
 import { DatabaseHealthGauges } from "../home/DatabaseHealthGauges";
+import { AutoCommitControlCard } from "../home/AutoCommitControlCard";
+
+interface LatestVideo {
+  code: string;
+  title: string;
+  thumbnail?: string | null;
+  postUrl?: string | null;
+  releaseDate?: string | null;
+  addedAt?: string;
+  actress?: { name: string; slug: string } | null;
+  studio?: { name: string; slug: string } | null;
+}
+
+interface LatestIndexData {
+  version: number;
+  updatedAt: string;
+  totalCount: number;
+  videos: LatestVideo[];
+}
 
 interface HomeViewProps {
   status: BackendStatus | null;
@@ -47,6 +70,106 @@ export const HomeView: React.FC<HomeViewProps> = ({ status, onNavigate }) => {
   const [perfReport, setPerfReport] = useState<Step10PerformanceReport | null>(null);
   const [isPurgingCache, setIsPurgingCache] = useState(false);
   const [purgeFeedback, setPurgeFeedback] = useState<string | null>(null);
+
+  // Auto-Commit & Uncommitted files state
+  const [autoCommitStatus, setAutoCommitStatus] = useState<AutoCommitStatus | null>(null);
+  const [loadingAutoCommit, setLoadingAutoCommit] = useState(false);
+
+  // Latest.json index state
+  const [latestData, setLatestData] = useState<LatestIndexData | null>(null);
+  const [loadingLatest, setLoadingLatest] = useState(false);
+
+  const fetchLatestVideos = async () => {
+    setLoadingLatest(true);
+    try {
+      const res = await fetchWithRetry("/api/database/latest");
+      if (res.ok) {
+        const data = await res.json();
+        setLatestData(data);
+      }
+    } catch (err) {
+      console.error("Failed to load latest.json:", err);
+    } finally {
+      setLoadingLatest(false);
+    }
+  };
+
+  const fetchAutoCommitStatus = async () => {
+    setLoadingAutoCommit(true);
+    try {
+      const res = await fetch("/api/system/auto-commit");
+      if (res.ok) {
+        const data = await res.json();
+        setAutoCommitStatus({
+          autoCommitEnabled: data.autoCommitEnabled ?? true,
+          uncommittedCount: data.uncommittedCount ?? 0,
+          uncommittedFiles: data.uncommittedFiles ?? [],
+          lastModifiedAt: data.lastModifiedAt,
+        });
+      }
+    } catch (err) {
+      console.error("Failed to load auto-commit status:", err);
+    } finally {
+      setLoadingAutoCommit(false);
+    }
+  };
+
+  const handleToggleAutoCommit = async (enable: boolean) => {
+    const res = await fetch("/api/system/auto-commit/toggle", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled: enable }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Failed to toggle" }));
+      throw new Error(err.error || "Failed to toggle auto-commit");
+    }
+    const data = await res.json();
+    setAutoCommitStatus({
+      autoCommitEnabled: data.autoCommitEnabled,
+      uncommittedCount: data.uncommittedCount,
+      uncommittedFiles: data.uncommittedFiles,
+      lastModifiedAt: data.lastModifiedAt,
+    });
+  };
+
+  const handleCommitPending = async (message?: string) => {
+    const res = await fetch("/api/system/auto-commit/commit-pending", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Failed to commit" }));
+      throw new Error(err.error || "Failed to commit pending files");
+    }
+    const data = await res.json();
+    setAutoCommitStatus({
+      autoCommitEnabled: data.autoCommitEnabled,
+      uncommittedCount: data.uncommittedCount,
+      uncommittedFiles: data.uncommittedFiles,
+      lastModifiedAt: data.lastModifiedAt,
+    });
+    await fetchSchemaStatus();
+  };
+
+  const handleDiscardPending = async () => {
+    const res = await fetch("/api/system/auto-commit/discard-pending", {
+      method: "POST",
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Failed to discard" }));
+      throw new Error(err.error || "Failed to discard pending changes");
+    }
+    const data = await res.json();
+    setAutoCommitStatus({
+      autoCommitEnabled: data.autoCommitEnabled,
+      uncommittedCount: data.uncommittedCount,
+      uncommittedFiles: data.uncommittedFiles,
+      lastModifiedAt: data.lastModifiedAt,
+    });
+    await fetchSchemaStatus();
+  };
 
   const fetchSchemaStatus = async () => {
     setLoadingSchema(true);
@@ -79,6 +202,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ status, onNavigate }) => {
   useEffect(() => {
     fetchSchemaStatus();
     fetchPerformanceMetrics();
+    fetchAutoCommitStatus();
+    fetchLatestVideos();
   }, []);
 
   const runStorageSelfTest = async () => {
@@ -174,103 +299,147 @@ export const HomeView: React.FC<HomeViewProps> = ({ status, onNavigate }) => {
     { id: "maintenance", label: "Maintenance Tools", icon: Wrench, desc: "Deep validation, duplicate/orphan detection, index repairs & rebuilds", badge: "Health Audit" },
   ];
 
-  const totalIndexed =
-    (schemaReport?.files?.codes?.totalCount ?? 62) +
-    (schemaReport?.files?.videos?.totalCount ?? 60) +
-    (schemaReport?.files?.actresses?.totalCount ?? 34) +
-    (schemaReport?.files?.studios?.totalCount ?? 22);
-
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-8">
-      {/* 1. HERO BANNER WITH REPOSITORY TELEMETRY */}
-      <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 sm:p-7 shadow-xs relative overflow-hidden">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-xs font-mono font-semibold text-neutral-500 uppercase tracking-wider">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Single-Source JSON Engine
-              </span>
-              <span className="text-neutral-300">|</span>
-              <span className="text-neutral-600">Avdb Universal Architecture</span>
-            </div>
-
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-neutral-950 tracking-tight">
-              Avdb Metadata Repository & Database Engine
-            </h1>
-
-            <p className="text-xs sm:text-sm text-neutral-600 max-w-2xl leading-relaxed">
-              High-performance, file-backed metadata repository storing normalized Japanese Adult Video records directly in GitHub JSON.
-              Includes built-in de-duplication, in-memory LRU caching, atomic mutex write queues, and live scraping pipelines.
-            </p>
-
-            {/* Quick Action Navigation Buttons */}
-            <div className="pt-2 flex items-center gap-2.5 flex-wrap">
-              <button
-                onClick={() => onNavigate("bulk-scraper")}
-                className="px-3.5 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-all hover:shadow"
-              >
-                <Layers className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Open Bulk Scraper</span>
-              </button>
-
-              <button
-                onClick={() => onNavigate("search")}
-                className="px-3.5 py-2 rounded-xl border border-neutral-200 hover:bg-neutral-50 text-neutral-800 text-xs font-semibold flex items-center gap-1.5 transition-colors"
-              >
-                <Search className="w-3.5 h-3.5 text-neutral-500" />
-                <span>Search Database</span>
-              </button>
-
-              <button
-                onClick={() => onNavigate("maintenance")}
-                className="px-3.5 py-2 rounded-xl border border-neutral-200 hover:bg-neutral-50 text-neutral-800 text-xs font-semibold flex items-center gap-1.5 transition-colors"
-              >
-                <Wrench className="w-3.5 h-3.5 text-neutral-500" />
-                <span>Run Integrity Audit</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Right Status Badges */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-2.5 shrink-0">
-            <div className="px-3.5 py-2.5 rounded-xl border border-neutral-200/80 bg-neutral-50/80">
-              <div className="text-[10px] font-mono font-medium text-neutral-500 uppercase">Target Repository</div>
-              <div className="text-xs font-bold font-mono text-neutral-900 truncate">
-                {status?.repo ? `${status.repo.owner}/${status.repo.repo}` : "telebottg7-sudo/Avdb"}
-              </div>
-            </div>
-
-            <div className="px-3.5 py-2.5 rounded-xl border border-neutral-200/80 bg-neutral-50/80">
-              <div className="text-[10px] font-mono font-medium text-neutral-500 uppercase">Database Root</div>
-              <div className="text-xs font-bold font-mono text-neutral-900">
-                {status?.repo?.root || "database"}/
-              </div>
-            </div>
-
-            <div className="px-3.5 py-2.5 rounded-xl border border-neutral-200/80 bg-neutral-50/80">
-              <div className="text-[10px] font-mono font-medium text-neutral-500 uppercase">Total Records</div>
-              <div className="text-xs font-bold font-mono text-emerald-700 flex items-center gap-1">
-                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                <span>{totalIndexed} Indexed Entities</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. GRAPHICAL DATABASE TOPOLOGY & DATA FLOW PIPELINE */}
-      <DatabaseTopologyGraphic
-        cacheHitRatio={perfMetrics?.cache.hitRatio ?? 0.72}
-        avgLatencyMs={perfMetrics?.cache.avgLatencyMs ?? 0.01}
-        totalCodes={schemaReport?.files?.codes?.totalCount ?? 62}
-        totalVideos={schemaReport?.files?.videos?.totalCount ?? 60}
-        totalActresses={schemaReport?.files?.actresses?.totalCount ?? 34}
-        totalStudios={schemaReport?.files?.studios?.totalCount ?? 22}
-        onNavigate={onNavigate}
+      {/* 1. GITHUB AUTO-COMMIT CONTROL & UNCOMMITTED FILES SIGNAL */}
+      <AutoCommitControlCard
+        status={autoCommitStatus}
+        loading={loadingAutoCommit}
+        onToggleAutoCommit={handleToggleAutoCommit}
+        onCommitPending={handleCommitPending}
+        onDiscardPending={handleDiscardPending}
+        onRefresh={fetchAutoCommitStatus}
       />
 
-      {/* 3. GRAPHICAL DATABASE HEALTH GAUGES & COMPOSITION CHART */}
+      {/* 2. NEWEST VIDEO RELEASES (POWERED DIRECTLY BY database/index/latest.json) */}
+      <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-neutral-100">
+          <div>
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              <h2 className="text-sm font-bold text-neutral-900 uppercase tracking-wide">
+                Newest Video Releases
+              </h2>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-700 border border-neutral-200">
+                database/index/latest.json
+              </span>
+            </div>
+            <p className="text-xs text-neutral-500 mt-0.5">
+              Chronological feed of recent additions ({latestData?.totalCount ?? 0} videos indexed, sorted by addedAt descending)
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={fetchLatestVideos}
+              disabled={loadingLatest}
+              className="px-3 py-1.5 rounded-lg border border-neutral-200 hover:bg-neutral-50 text-neutral-700 text-xs font-medium transition-colors flex items-center gap-1.5"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loadingLatest ? "animate-spin" : ""}`} />
+              <span>Refresh Feed</span>
+            </button>
+            <button
+              onClick={() => onNavigate("videos")}
+              className="px-3 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors flex items-center gap-1.5"
+            >
+              <span>Explore All Catalog</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {loadingLatest ? (
+          <div className="py-12 text-center text-xs text-neutral-500 flex flex-col items-center justify-center gap-2">
+            <Loader2 className="w-5 h-5 animate-spin text-neutral-400" />
+            <span>Loading latest.json video index...</span>
+          </div>
+        ) : !latestData?.videos || latestData.videos.length === 0 ? (
+          <div className="py-10 text-center text-xs text-neutral-500 bg-neutral-50 rounded-xl border border-neutral-200/60 p-6">
+            <Film className="w-8 h-8 text-neutral-300 mx-auto mb-2" />
+            <p className="font-semibold text-neutral-700">No videos indexed in latest.json yet</p>
+            <p className="mt-1 text-neutral-400">Use Bulk Scraper or Maintenance Tools to ingest recent releases.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
+            {latestData.videos.slice(0, 12).map((vid, idx) => (
+              <div
+                key={vid.code || idx}
+                className="bg-neutral-50 border border-neutral-200/80 rounded-xl overflow-hidden group hover:border-neutral-300 hover:shadow-xs transition-all flex flex-col justify-between"
+              >
+                <div>
+                  {/* Thumbnail */}
+                  <div className="aspect-16/10 bg-neutral-900 relative overflow-hidden">
+                    {vid.thumbnail ? (
+                      <img
+                        src={vid.thumbnail}
+                        alt={vid.title || vid.code}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src =
+                            "https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=400&q=80";
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-neutral-600">
+                        <Film className="w-6 h-6" />
+                      </div>
+                    )}
+                    <div className="absolute top-2 left-2 bg-neutral-950/80 backdrop-blur-xs text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded-md border border-white/20">
+                      {vid.code}
+                    </div>
+                  </div>
+
+                  {/* Body */}
+                  <div className="p-3 space-y-1.5">
+                    <h3 className="text-xs font-bold text-neutral-900 line-clamp-2 leading-snug group-hover:text-neutral-950">
+                      {vid.title || vid.code}
+                    </h3>
+
+                    {/* Metadata tags */}
+                    <div className="flex flex-wrap gap-1 pt-1 text-[10px]">
+                      {vid.actress?.name && (
+                        <span className="bg-neutral-200/70 text-neutral-800 font-medium px-1.5 py-0.5 rounded">
+                          {vid.actress.name}
+                        </span>
+                      )}
+                      {vid.studio?.name && (
+                        <span className="bg-neutral-200/70 text-neutral-700 px-1.5 py-0.5 rounded">
+                          {vid.studio.name}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="px-3 pb-3 pt-1 flex items-center justify-between text-[10px] text-neutral-500 border-t border-neutral-200/50 mt-2">
+                  <span className="flex items-center gap-1 font-mono">
+                    <Calendar className="w-3 h-3 text-neutral-400" />
+                    {vid.releaseDate || "2026-09-11"}
+                  </span>
+                  {vid.postUrl ? (
+                    <a
+                      href={vid.postUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-neutral-600 hover:text-neutral-900 flex items-center gap-0.5 font-medium"
+                    >
+                      <span>Post</span>
+                      <ExternalLink className="w-2.5 h-2.5" />
+                    </a>
+                  ) : (
+                    <span className="font-mono text-neutral-400">Indexed</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 2. GRAPHICAL DATABASE HEALTH GAUGES & COMPOSITION CHART */}
       <div>
         <div className="flex items-center justify-between mb-3">
           <div>

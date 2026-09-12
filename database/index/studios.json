@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "updatedAt": "2026-09-12T10:02:46.798Z",
+  "totalCount": 2,
+  "studios": [
+    {
+      "slug": "prestige",
+      "name": "PRESTIGE",
+      "letter": "p",
+      "path": "studio/p/prestige.json",
+      "thumbnail": "https://javtiful.com/uploads/uploads/videos/thumbs/2026/09/09/74479091316f90d17d103689f83ecc44.jpg",
+      "videoCount": 64,
+      "updatedAt": "2026-09-12T09:56:40.489Z"
+    },
+    {
+      "slug": "s1-no1-style",
+      "name": "S1 NO.1 STYLE",
+      "letter": "s",
+      "path": "studio/s/s1-no1-style.json",
+      "thumbnail": "https://javtiful.com/uploads/uploads/videos/thumbs/2026/09/09/a24b55ef52e5d9ede67c6e8113e5c24e.jpg",
+      "videoCount": 685,
+      "updatedAt": "2026-09-12T09:07:25.344Z"
+    }
+  ]
+}

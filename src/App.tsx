@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { NavView, BackendStatus } from "./types";
+import { NavView, NavParams, BackendStatus } from "./types";
 import { Sidebar } from "./components/layout/Sidebar";
 import { Header } from "./components/layout/Header";
 import { HomeView } from "./components/views/HomeView";
@@ -14,9 +14,17 @@ import { SystemTestsView } from "./components/views/SystemTestsView";
 
 export default function App() {
   const [currentView, setCurrentView] = useState<NavView>("home");
+  const [bulkParams, setBulkParams] = useState<NavParams | null>(null);
   const [status, setStatus] = useState<BackendStatus | null>(null);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [mobileOpen, setMobileOpen] = useState<boolean>(false);
+
+  const handleNavigate = (view: NavView, params?: NavParams) => {
+    if (view === "bulk-scraper" && params) {
+      setBulkParams(params);
+    }
+    setCurrentView(view);
+  };
 
   useEffect(() => {
     fetch("/api/config/status")
@@ -32,25 +40,25 @@ export default function App() {
   const renderView = () => {
     switch (currentView) {
       case "home":
-        return <HomeView status={status} onNavigate={setCurrentView} />;
+        return <HomeView status={status} onNavigate={handleNavigate} />;
       case "search":
-        return <SearchView onNavigate={setCurrentView} />;
+        return <SearchView onNavigate={handleNavigate} />;
       case "bulk-scraper":
-        return <BulkScraperView onNavigate={setCurrentView} />;
+        return <BulkScraperView onNavigate={handleNavigate} initialParams={bulkParams} />;
       case "actress":
-        return <ActressView onNavigate={setCurrentView} />;
+        return <ActressView onNavigate={handleNavigate} />;
       case "studio":
-        return <StudioView onNavigate={setCurrentView} />;
+        return <StudioView onNavigate={handleNavigate} />;
       case "code":
-        return <CodeView onNavigate={setCurrentView} />;
+        return <CodeView onNavigate={handleNavigate} />;
       case "videos":
-        return <VideosView onNavigate={setCurrentView} />;
+        return <VideosView onNavigate={handleNavigate} />;
       case "maintenance":
         return <MaintenanceView />;
       case "system-tests":
         return <SystemTestsView />;
       default:
-        return <HomeView status={status} onNavigate={setCurrentView} />;
+        return <HomeView status={status} onNavigate={handleNavigate} />;
     }
   };
 
@@ -59,7 +67,7 @@ export default function App() {
       {/* Collapsible & Mobile Responsive Left Sidebar */}
       <Sidebar
         currentView={currentView}
-        onNavigate={setCurrentView}
+        onNavigate={handleNavigate}
         status={status}
         isCollapsed={isCollapsed}
         onToggleCollapse={() => setIsCollapsed((prev) => !prev)}

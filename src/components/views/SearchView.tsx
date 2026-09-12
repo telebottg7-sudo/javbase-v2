@@ -31,6 +31,7 @@ import {
   NavView,
 } from "../../types";
 import { MediaHarvesterModal } from "../modals/MediaHarvesterModal";
+import { DatabasePagination } from "../common/DatabasePagination";
 
 interface SearchViewProps {
   onNavigate?: (view: NavView) => void;
@@ -399,17 +400,23 @@ export const SearchView: React.FC<SearchViewProps> = ({ onNavigate }) => {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex items-center justify-between text-xs text-neutral-500 font-medium px-1">
-                <span>
-                  Showing {searchResponse?.results.length} of {searchResponse?.totalFound} results
-                </span>
-                <span>Page {searchResponse?.page} of {searchResponse?.totalPages}</span>
-              </div>
+              {/* Top Pagination */}
+              {searchResponse && searchResponse.totalPages > 1 && (
+                <DatabasePagination
+                  idPrefix="search-db-pagination-top"
+                  currentPage={searchResponse.page}
+                  totalPages={searchResponse.totalPages}
+                  totalItems={searchResponse.totalFound}
+                  itemsPerPage={24}
+                  loading={loading}
+                  onPageChange={(targetPage) => performSearch(query, activeTab, targetPage)}
+                />
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {searchResponse?.results.map((item) => (
+                {searchResponse?.results.map((item, idx) => (
                   <div
-                    key={item.id}
+                    key={`${item.id || item.type}-${idx}`}
                     className="flex flex-col bg-white rounded-xl border border-neutral-200 overflow-hidden hover:shadow-md transition-shadow group"
                   >
                     {/* Visual Preview / Header */}
@@ -564,27 +571,17 @@ export const SearchView: React.FC<SearchViewProps> = ({ onNavigate }) => {
                 ))}
               </div>
 
-              {/* Pagination */}
+              {/* Bottom Pagination */}
               {searchResponse && searchResponse.totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 pt-6">
-                  <button
-                    disabled={searchResponse.page <= 1 || loading}
-                    onClick={() => performSearch(query, activeTab, searchResponse.page - 1)}
-                    className="px-3 py-1.5 rounded-md border border-neutral-300 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 transition-colors"
-                  >
-                    Previous
-                  </button>
-                  <span className="text-xs font-mono text-neutral-500">
-                    Page {searchResponse.page} of {searchResponse.totalPages}
-                  </span>
-                  <button
-                    disabled={searchResponse.page >= searchResponse.totalPages || loading}
-                    onClick={() => performSearch(query, activeTab, searchResponse.page + 1)}
-                    className="px-3 py-1.5 rounded-md border border-neutral-300 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 transition-colors"
-                  >
-                    Next
-                  </button>
-                </div>
+                <DatabasePagination
+                  idPrefix="search-db-pagination-bottom"
+                  currentPage={searchResponse.page}
+                  totalPages={searchResponse.totalPages}
+                  totalItems={searchResponse.totalFound}
+                  itemsPerPage={24}
+                  loading={loading}
+                  onPageChange={(targetPage) => performSearch(query, activeTab, targetPage)}
+                />
               )}
             </div>
           )}
