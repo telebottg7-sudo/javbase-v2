@@ -226,17 +226,25 @@ export class IngestionService {
   /**
    * Mirror all files to local filesystem database/ directory
    */
-  private async saveLocalDiskFiles(files: Array<{ path: string; content: string | object }>): Promise<void> {
+private async saveLocalDiskFiles(files: Array<{ path: string; content: string | object }>): Promise<void> {
     const dbDir = path.join(process.cwd(), "database");
-    for (const f of files) {
-      try {
-        const fullPath = path.join(dbDir, f.path);
-        await fs.mkdir(path.dirname(fullPath), { recursive: true });
-        const str = typeof f.content === "string" ? f.content : JSON.stringify(f.content, null, 2);
-        await fs.writeFile(fullPath, str, "utf-8");
-      } catch (err) {
-        console.warn(`[Local Sync] Error writing local file ${f.path}:`, err);
-      }
+    
+    // Batch file writes to avoid OS "too many open files" limits while remaining extremely fast
+    const batchSize = 50;
+    for (let i = 0; i < files.length; i += batchSize) {
+      const batch = files.slice(i, i + batchSize);
+      await Promise.all(
+        batch.map(async (f) => {
+          try {
+            const fullPath = path.join(dbDir, f.path);
+            await fs.mkdir(path.dirname(fullPath), { recursive: true });
+            const str = typeof f.content === "string" ? f.content : JSON.stringify(f.content, null, 2);
+            await fs.writeFile(fullPath, str, "utf-8");
+          } catch (err) {
+            console.warn(`[Local Sync] Error writing local file ${f.path}:`, err);
+          }
+        })
+      );
     }
   }
 
@@ -695,7 +703,7 @@ export class IngestionService {
    */
   async bulkIngestTransaction(
     items: IngestVideoInput[],
-    options?: { commitMessage?: string }
+    options?: { commitMessage?: string; onProgress?: (msg: string, pct: number) => void }
   ): Promise<BatchIngestionResult> {
     const startTime = Date.now();
     const now = new Date().toISOString();
@@ -1013,6 +1021,7 @@ export class IngestionService {
       studios: studiosIdx.studios,
     };
 
+    options?.onProgress?.("Assembling atomic files...", 0.1);
     // 6. Assemble files for ONE ATOMIC BATCH COMMIT
     const filesToCommit: Array<{ path: string; content: string | object }> = [
       { path: this.videosIndexPath, content: updatedVideosIdx },
@@ -1066,7 +1075,9 @@ export class IngestionService {
     const commitMsg =
       options?.commitMessage ||
       `[Bulk Ingestion] Batch ingested ${newItemsToIngest.length} videos in single transaction`;
+    options?.onProgress?.("Pushing atomic commit to GitHub...", 0.4);
     const commitResult = await this.storage.batchCommit(filesToCommit, commitMsg);
+    options?.onProgress?.("Writing to local disk cache...", 0.8);
 
     this.storage.purgeCache("index");
     await this.saveLocalDiskFiles(filesToCommit);

@@ -620,6 +620,14 @@ router.post("/scrapers/javtiful/auto-crawl-and-save", async (req: Request, res: 
 
       batchResult = await ingestionService.bulkIngestTransaction(allItemsToIngest, {
         commitMessage: commitMsg,
+        onProgress: (status, progress) => {
+          if (typeof sendEvent === 'function') {
+            sendEvent("progress", {
+              status: status,
+              progress: 0.9 + (progress * 0.1)
+            });
+          }
+        }
       });
     }
 
@@ -840,6 +848,14 @@ router.get("/scrapers/javtiful/auto-crawl-stream", async (req: Request, res: Res
         `[Auto Crawl] Ingested ${allItemsToIngest.length} unique videos from ${mode} (${startPage}-${lastCrawledPage}) with Auto-Commit: ${autoCommitEnabled ? "ON" : "OFF"}`;
       batchResult = await ingestionService.bulkIngestTransaction(allItemsToIngest, {
         commitMessage: commitMsg,
+        onProgress: (status, progress) => {
+          if (typeof sendEvent === 'function') {
+            sendEvent("progress", {
+              status: status,
+              progress: 0.9 + (progress * 0.1)
+            });
+          }
+        }
       });
     }
 
