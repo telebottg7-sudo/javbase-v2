@@ -5,7 +5,7 @@ import { registerRoutes } from "./server/routes";
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number.parseInt(process.env.PORT || "3000", 10);
 
   app.use(express.json());
 
@@ -27,9 +27,11 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  const server = app.listen(Number.isFinite(PORT) ? PORT : 3000, "0.0.0.0", () => {
     console.log(`[Avdb] Server running on http://0.0.0.0:${PORT}`);
   });
+  server.requestTimeout = 30_000;
+  server.headersTimeout = 35_000;
 }
 
 startServer();

@@ -3,6 +3,7 @@ import { GitHubStorage } from "../storage";
 import { CodeRegistryService } from "./codeRegistry";
 import { IngestionService } from "./ingestionService";
 import { normalizeCode } from "../schema/normalizers";
+import { extractPlayerSources, normalizeMediaUrl } from "./mediaExtractor";
 import {
   UniversalSearchResponse,
   UniversalSearchResultItem,
@@ -435,9 +436,7 @@ export class SearchService {
       $("meta[property='og:image']").attr("content") ||
       $("img.front-video-cover").attr("src") ||
       "";
-    if (coverImage && !coverImage.startsWith("http")) {
-      coverImage = `https://javtiful.com${coverImage.startsWith("/") ? "" : "/"}${coverImage}`;
-    }
+    coverImage = coverImage ? normalizeMediaUrl(coverImage, targetUrl) || "" : "";
 
     // 4. Extract Actresses
     const actresses: Array<{ name: string; slug: string }> = [];
@@ -503,58 +502,19 @@ export class SearchService {
       });
     }
 
-    // 9. Extract Direct Streaming MP4 Video (playerSources) from inline script tags
-    const playerSources: HarvestedMediaStream[] = [];
-    const scriptText = $("script")
-      .map((_, el) => $(el).html() || "")
-      .get()
-      .join("\n");
-
-    const playerMatch = scriptText.match(/"playerSources":\s*(\[[^\]]+\])/);
-    if (playerMatch) {
-      try {
-        const rawSources = JSON.parse(playerMatch[1]);
-        if (Array.isArray(rawSources)) {
-          for (const s of rawSources) {
-            if (s.src) {
-              playerSources.push({
-                quality: s.size || 720,
-                label: `${s.size || 720}p HD`,
-                format: s.type || "video/mp4",
-                url: s.src,
-              });
-            }
-          }
-        }
-      } catch (err) {
-        console.warn("Failed to parse playerSources:", err);
-      }
-    }
-
-    // Fallback: check download endpoints or video sources
-    $("video source").each((_, el) => {
-      const src = $(el).attr("src");
-      const type = $(el).attr("type") || "video/mp4";
-      if (src && !playerSources.some((p) => p.url === src)) {
-        playerSources.push({
-          quality: "720",
-          label: "720p HD",
-          format: type,
-          url: src,
-        });
-      }
-    });
+    // 9. Parse both JSON and JavaScript player configurations, then video/source fallbacks.
+    const playerSources: HarvestedMediaStream[] = extractPlayerSources(html, targetUrl);
 
     // 10. Extract Preview MP4
     let previewVideoUrl: string | undefined = undefined;
     const previewMatch = html.match(/data-front-video-preview-src="([^"]+\.mp4)"/i);
     if (previewMatch) {
-      previewVideoUrl = previewMatch[1];
+      previewVideoUrl = normalizeMediaUrl(previewMatch[1], targetUrl);
     }
 
     // 11. Cross-reference Database status (is it in videos.json or codes.json?)
     let inDatabase = false;
-    let databaseEntry: any = undefined;
+    let databaseEntry: HarvestedMediaDetails["databaseEntry"];
     if (code) {
       const check = await this.codeRegistry.checkCode(code);
       if (check.isDuplicate) {

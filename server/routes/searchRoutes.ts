@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { searchService } from "../services";
+import { createMediaProxyHandler } from "./mediaProxy";
 
 const router = Router();
 
@@ -43,6 +44,10 @@ router.get("/media/harvest", async (req: Request, res: Response) => {
     res.status(500).json({ error: errorMsg });
   }
 });
+
+// This is deliberately not a general-purpose URL proxy: the handler accepts only
+// the Javtiful media host allow-list and forwards Range for seekable playback.
+router.get("/media/stream", createMediaProxyHandler());
 
 // Step 8 Automated Verification Test Suite
 router.post("/search/step8-test-suite", async (_req: Request, res: Response) => {
