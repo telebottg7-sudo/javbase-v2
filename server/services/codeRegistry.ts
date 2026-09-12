@@ -730,7 +730,7 @@ export class CodeRegistryService {
     
     // Trigger background rebuild of category summaries
     if (registered.length > 0) {
-      this.rebuildCategorySummaries().catch(e => console.error("Background summary rebuild failed:", e));
+      // this.rebuildCategorySummaries();
     }
 
     const stats = await this.getStats();

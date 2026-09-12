@@ -703,7 +703,7 @@ export const BulkScraperView: React.FC<BulkScraperViewProps> = ({ onNavigate, in
     });
 
     const eventSource = new EventSource(`/api/scrapers/javtiful/auto-crawl-stream?${params.toString()}`);
-
+    let isComplete = false;
     eventSource.addEventListener("progress", (event: any) => {
       try {
         const data = JSON.parse(event.data);
@@ -719,6 +719,7 @@ export const BulkScraperView: React.FC<BulkScraperViewProps> = ({ onNavigate, in
     });
 
     eventSource.addEventListener("complete", (event: any) => {
+      isComplete = true;
       try {
         const data = JSON.parse(event.data);
         if (data.success) {
@@ -754,6 +755,7 @@ export const BulkScraperView: React.FC<BulkScraperViewProps> = ({ onNavigate, in
     });
 
     eventSource.onerror = (error) => {
+      if (isComplete) return;
       console.error("EventSource error:", error);
       eventSource.close();
       setBatchIngesting(false);
@@ -783,6 +785,7 @@ export const BulkScraperView: React.FC<BulkScraperViewProps> = ({ onNavigate, in
     });
 
     const eventSource = new EventSource(`/api/scrapers/javtiful/auto-crawl-stream?${params.toString()}`);
+    let isComplete = false;
 
     eventSource.addEventListener("progress", (event: any) => {
       try {
@@ -799,6 +802,7 @@ export const BulkScraperView: React.FC<BulkScraperViewProps> = ({ onNavigate, in
     });
 
     eventSource.addEventListener("complete", (event: any) => {
+      isComplete = true;
       try {
         const data = JSON.parse(event.data);
         if (data.success) {
@@ -848,6 +852,7 @@ export const BulkScraperView: React.FC<BulkScraperViewProps> = ({ onNavigate, in
     });
 
     eventSource.addEventListener("error", (event: any) => {
+      if (isComplete) return;
       try {
         if (event.data) {
           const data = JSON.parse(event.data);
@@ -894,6 +899,7 @@ const handleAutoCrawlCatalog = async (pagesToCrawl = 3) => {
     });
 
     const eventSource = new EventSource(`/api/scrapers/javtiful/auto-crawl-stream?${params.toString()}`);
+    let isComplete = false;
 
     eventSource.onmessage = (event) => {
       try {
@@ -919,6 +925,7 @@ const handleAutoCrawlCatalog = async (pagesToCrawl = 3) => {
     });
 
     eventSource.addEventListener("complete", (event: any) => {
+      isComplete = true;
       try {
         const data = JSON.parse(event.data);
         if (data.success) {
@@ -957,6 +964,7 @@ const handleAutoCrawlCatalog = async (pagesToCrawl = 3) => {
     });
 
     eventSource.addEventListener("error", (event: any) => {
+      if (isComplete) return;
       try {
         if (event.data) {
           const data = JSON.parse(event.data);

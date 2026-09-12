@@ -118,6 +118,35 @@ export class MaintenanceService {
    * Runs complete validation diagnostics across all indexes, sharded files,
    * duplicate codes, orphan files, and dangling pointers.
    */
+
+  private async readIndexWithChunks<T>(path: string): Promise<{ data: T } | null> {
+    const mainFile = await this.storage.readFile<any>(path, true);
+    if (!mainFile || !mainFile.data) return mainFile;
+
+    if (mainFile.data.chunks && mainFile.data.chunks.length > 0) {
+      try {
+        const chunkPromises = mainFile.data.chunks.map((chunkPath: string) => 
+          this.storage.readFile<any>(chunkPath, true).catch(() => null)
+        );
+        const chunkResults = await Promise.all(chunkPromises);
+        
+        let allItems = [];
+        const arrayKey = path.includes('videos') ? 'videos' : path.includes('actresses') ? 'actresses' : 'studios';
+        
+        for (const res of chunkResults) {
+          if (res && res.data && Array.isArray(res.data[arrayKey])) {
+            allItems = allItems.concat(res.data[arrayKey]);
+          }
+        }
+        mainFile.data[arrayKey] = allItems;
+      } catch (e) {
+        console.error("Failed to load chunks for", path, e);
+      }
+    }
+    
+    return mainFile as { data: T };
+  }
+
   public async runFullDiagnostics(): Promise<MaintenanceReport> {
     const startTime = Date.now();
     const issues: MaintenanceIssue[] = [];

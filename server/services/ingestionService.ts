@@ -149,6 +149,50 @@ export class IngestionService {
   private lastStudiosFetchedAt = 0;
   private readonly cacheTtlMs = 60 * 1000;
 
+
+  public chunkLargeIndexes(files: any[]): any[] {
+    const maxItems = 500;
+    const result = [];
+    for (const file of files) {
+      const p = file.path;
+      if (p === 'index/videos.json' && file.content && Array.isArray(file.content.videos) && file.content.videos.length > maxItems) {
+        const allItems = file.content.videos;
+        const chunks = [];
+        for (let i = 0; i < allItems.length; i += maxItems) {
+          const chunkPath = `index/videos/chunk-${Math.floor(i/maxItems)}.json`;
+          chunks.push(chunkPath);
+          result.push({ path: chunkPath, content: { videos: allItems.slice(i, i + maxItems) } });
+        }
+        file.content.videos = [];
+        file.content.chunks = chunks;
+      }
+      else if (p === 'index/actresses.json' && file.content && Array.isArray(file.content.actresses) && file.content.actresses.length > maxItems) {
+        const allItems = file.content.actresses;
+        const chunks = [];
+        for (let i = 0; i < allItems.length; i += maxItems) {
+          const chunkPath = `index/actresses/chunk-${Math.floor(i/maxItems)}.json`;
+          chunks.push(chunkPath);
+          result.push({ path: chunkPath, content: { actresses: allItems.slice(i, i + maxItems) } });
+        }
+        file.content.actresses = [];
+        file.content.chunks = chunks;
+      }
+      else if (p === 'index/studios.json' && file.content && Array.isArray(file.content.studios) && file.content.studios.length > maxItems) {
+        const allItems = file.content.studios;
+        const chunks = [];
+        for (let i = 0; i < allItems.length; i += maxItems) {
+          const chunkPath = `index/studios/chunk-${Math.floor(i/maxItems)}.json`;
+          chunks.push(chunkPath);
+          result.push({ path: chunkPath, content: { studios: allItems.slice(i, i + maxItems) } });
+        }
+        file.content.studios = [];
+        file.content.chunks = chunks;
+      }
+      result.push(file);
+    }
+    return result;
+  }
+
   constructor(storage: GitHubStorage, codeRegistry: CodeRegistryService) {
     this.storage = storage;
     this.codeRegistry = codeRegistry;
