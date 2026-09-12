@@ -39,7 +39,7 @@ export const BulkScraperView: React.FC<BulkScraperViewProps> = ({ onNavigate, in
 
   // Universal Bulk Scraper State
   const [bulkUrl, setBulkUrl] = useState<string>("");
-  const [bulkEnrichDetails, setBulkEnrichDetails] = useState<boolean>(true);
+  const [bulkEnrichDetails, setBulkEnrichDetails] = useState<boolean>(false);
   const [bulkFilterDuplicates, setBulkFilterDuplicates] = useState<boolean>(false);
   const [bulkScraping, setBulkScraping] = useState<boolean>(false);
   const [bulkScrapeResult, setBulkScrapeResult] = useState<JavtifulScrapeResult | null>(null);
@@ -57,7 +57,7 @@ export const BulkScraperView: React.FC<BulkScraperViewProps> = ({ onNavigate, in
   // Catalog Scraper State
   const [catalogPage, setCatalogPage] = useState<number>(1);
   const [filterDuplicates, setFilterDuplicates] = useState<boolean>(false);
-  const [enrichDetails, setEnrichDetails] = useState<boolean>(true);
+  const [enrichDetails, setEnrichDetails] = useState<boolean>(false);
   const [catalogLoading, setCatalogLoading] = useState<boolean>(false);
   const [catalogResult, setCatalogResult] = useState<JavtifulScrapeResult | null>(null);
   const [catalogError, setCatalogError] = useState<string | null>(null);
