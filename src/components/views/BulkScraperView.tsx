@@ -681,6 +681,72 @@ export const BulkScraperView: React.FC<BulkScraperViewProps> = ({ onNavigate, in
     }
   };
 
+
+  const handleAutoCrawlStudio = async (pagesToCrawl = 3) => {
+    if (!selectedStudio) return;
+    setBatchIngesting(true);
+    setStudioVideosLoading(true);
+    setIngestionBanner(null);
+
+    try {
+      const res = await fetch("/api/scrapers/javtiful/auto-crawl-and-save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "studio",
+          slug: selectedStudio,
+          startPage: studioVideosPage,
+          pagesToCrawl,
+          enrichDetails: true,
+        }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        if (data.scrapeResult) {
+          setStudioVideos(data.scrapeResult.items || []);
+          if (data.scrapeResult.pagination) {
+            setStudioVideosPagination(data.scrapeResult.pagination);
+          }
+        }
+        if (data.lastCrawledPage) {
+          setStudioVideosPage(data.lastCrawledPage);
+        }
+        setIngestionBanner({
+          type: "success",
+          message:
+            data.message ||
+            `Studio Multi-Page Crawl: Saved ${data.ingestedCount} videos across ${data.pagesCrawled} pages (${data.duplicateCount} duplicates filtered)`,
+          details: data.autoCommitEnabled
+            ? `GitHub Atomic Commit: ${data.commitSha ? data.commitSha.slice(0, 7) : "pushed"}`
+            : `Database Staged: Staged in memory (${data.uncommittedCount || 0} pending files — Auto-Commit is OFF)`,
+        });
+        if (typeof data.autoCommitEnabled === "boolean") {
+          setAutoCommitEnabled(data.autoCommitEnabled);
+        }
+        if (typeof data.uncommittedCount === "number") {
+          setUncommittedCount(data.uncommittedCount);
+        }
+      } else {
+        setIngestionBanner({
+          type: "error",
+          message: "Studio Crawl failed",
+          details: data.error,
+        });
+      }
+    } catch (err: unknown) {
+      setIngestionBanner({
+        type: "error",
+        message: "Studio Crawl error",
+        details: err instanceof Error ? err.message : String(err),
+      });
+    } finally {
+      setBatchIngesting(false);
+      setStudioVideosLoading(false);
+      fetchAutoCommitStatus();
+    }
+  };
+
   const handleAutoCrawlCatalog = async (pagesToCrawl = 3) => {
     setBatchIngesting(true);
     setCatalogLoading(true);
@@ -1111,6 +1177,8 @@ export const BulkScraperView: React.FC<BulkScraperViewProps> = ({ onNavigate, in
             setSelectedStudio(null);
             setSelectedStudioName(null);
           }}
+          batchIngesting={batchIngesting}
+          onAutoCrawlAndSave={handleAutoCrawlStudio}
           onStudioVideosPageChange={(page) => {
             if (selectedStudio) {
               viewStudioVideos(selectedStudio, selectedStudioName || undefined, page);
