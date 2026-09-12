@@ -228,13 +228,8 @@ export class CodeRegistryService {
    * Returns all available code categories by aggregating them from the in-memory index.
    */
   async getCategories(): Promise<string[]> {
-    const { index } = await this.getOrLoadIndex();
-    const categories = new Set<string>();
-    for (const code of Object.keys(index.codes)) {
-      const cat = getCodeCategory(code);
-      if (cat) categories.add(cat);
-    }
-    return Array.from(categories).sort();
+    const summaries = await this.getCategorySummaries();
+    return summaries.map(s => s.category).sort();
   }
 
   /**
@@ -470,31 +465,7 @@ export class CodeRegistryService {
           addedAt: entry.addedAt || new Date().toISOString(),
         });
       }
-    } else {
-      const { index } = await this.getOrLoadIndex();
-      for (const entry of Object.values(index.codes)) {
-        const cat = getCodeCategory(entry.code);
-        if (cat !== targetCat) continue;
 
-        const numInfo = extractCodeNumber(entry.code);
-        const vInfo = videosMap[entry.code];
-
-        matchingEntries.push({
-          code: entry.code,
-          number: numInfo.numberVal,
-          numberFormatted: numInfo.numberFormatted,
-          title: entry.title || entry.code,
-          postUrl: entry.postUrl || "",
-          thumbnail: vInfo?.thumbnail,
-          actressName: entry.actressName,
-          actressSlug: entry.actressSlug,
-          studioName: entry.studioName,
-          studioSlug: entry.studioSlug,
-          duration: vInfo?.duration,
-          releaseDate: vInfo?.releaseDate,
-          addedAt: entry.addedAt || new Date().toISOString(),
-        });
-      }
     }
 
     const totalCount = matchingEntries.length;
@@ -600,8 +571,13 @@ export class CodeRegistryService {
       };
     }
 
-    const { index } = await this.getOrLoadIndex();
-    const entry = index.codes[normalized];
+    const cat = getCodeCategory(normalized);
+    let entry: any = undefined;
+    if (cat) {
+      const { data: prefixIndex } = await this.loadPrefixIndex(cat);
+      const itemsList = Array.isArray(prefixIndex.codes) ? prefixIndex.codes : (Array.isArray(prefixIndex.videos) ? prefixIndex.videos : []);
+      entry = itemsList.find((v: any) => normalizeCode(v.code) === normalized);
+    }
 
     return {
       rawCode,
@@ -616,7 +592,30 @@ export class CodeRegistryService {
    * Batch checks a list of candidate codes in O(1) per item against the in-memory cache.
    */
   async checkBatch(rawCodes: string[]): Promise<CodeCheckResult[]> {
-    const { index } = await this.getOrLoadIndex();
+    const results: CodeCheckResult[] = [];
+    
+    // Group codes by category to load prefix files efficiently
+    const byCategory = new Map<string, string[]>();
+    for (const raw of rawCodes) {
+      const normalized = normalizeCode(raw);
+      if (!normalized) continue;
+      const cat = getCodeCategory(normalized);
+      if (cat) {
+        if (!byCategory.has(cat)) byCategory.set(cat, []);
+        byCategory.get(cat)!.push(normalized);
+      }
+    }
+    
+    const prefixEntries = new Map<string, any>();
+    for (const cat of byCategory.keys()) {
+      const { data: prefixIndex } = await this.loadPrefixIndex(cat);
+      const itemsList = Array.isArray(prefixIndex.codes) ? prefixIndex.codes : (Array.isArray(prefixIndex.videos) ? prefixIndex.videos : []);
+      for (const item of itemsList) {
+        const norm = normalizeCode(item.code);
+        if (norm) prefixEntries.set(norm, item);
+      }
+    }
+
     return rawCodes.map((raw) => {
       const normalized = normalizeCode(raw);
       if (!normalized) {
@@ -627,7 +626,7 @@ export class CodeRegistryService {
           isDuplicate: false,
         };
       }
-      const entry = index.codes[normalized];
+      const entry = prefixEntries.get(normalized);
       return {
         rawCode: raw,
         normalizedCode: normalized,
@@ -728,6 +727,11 @@ export class CodeRegistryService {
     // Invalidate aggregated cache
     this.cachedIndex = null;
     this.lastFetchedAt = 0;
+    
+    // Trigger background rebuild of category summaries
+    if (registered.length > 0) {
+      this.rebuildCategorySummaries().catch(e => console.error("Background summary rebuild failed:", e));
+    }
 
     const stats = await this.getStats();
 
@@ -791,13 +795,15 @@ export class CodeRegistryService {
     cacheAgeMs: number;
     sampleCodes: string[];
   }> {
-    const { index } = await this.getOrLoadIndex();
-    const codesList = Object.keys(index.codes);
+    const summaries = await this.getCategorySummaries();
+    const totalCount = summaries.reduce((acc, sum) => acc + sum.totalCount, 0);
+    const sampleCodes = summaries.slice(0, 5).flatMap(s => s.sampleCodes).slice(0, 10);
+    
     return {
-      totalCount: index.totalCount || codesList.length,
-      updatedAt: index.updatedAt,
-      cacheAgeMs: Date.now() - this.lastFetchedAt,
-      sampleCodes: codesList.slice(0, 10),
+      totalCount,
+      updatedAt: new Date().toISOString(),
+      cacheAgeMs: 0,
+      sampleCodes,
     };
   }
 
