@@ -164,7 +164,7 @@ export const ActressDirectoryTab: React.FC<ActressDirectoryTabProps> = ({
               <span className="px-2.5 py-1 bg-neutral-100 dark:bg-slate-800 border border-neutral-200 dark:border-[#1e293b] rounded-lg text-xs font-medium text-neutral-700 dark:text-slate-300">
                 {totalFound} on page
               </span>
-              <span className="px-2.5 py-1 bg-emerald-50 border border-emerald-200 rounded-lg text-xs font-semibold text-emerald-700">
+              <span className="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-lg text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                 {uniqueCount} new
               </span>
               {duplicateCount > 0 && (
@@ -210,7 +210,7 @@ export const ActressDirectoryTab: React.FC<ActressDirectoryTabProps> = ({
                   onSaveActressToDatabase &&
                   onSaveActressToDatabase({ filterDuplicates })
                 }
-                className="px-4 py-2 bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:bg-slate-200 disabled:opacity-50 text-white text-xs font-medium rounded-xl transition-all shadow-xs flex items-center gap-2 cursor-pointer"
+                className="px-4 py-2 bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-slate-200 disabled:opacity-50 text-white dark:text-slate-900 text-xs font-medium rounded-xl transition-all shadow-xs flex items-center gap-2 cursor-pointer"
               >
                 {isSavingActress ? (
                   <>
@@ -230,14 +230,14 @@ export const ActressDirectoryTab: React.FC<ActressDirectoryTabProps> = ({
 
         {/* Ingestion Receipt Banner */}
         {actressSaveReceipt && (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
             <div className="flex items-start sm:items-center gap-2.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5 sm:mt-0" />
               <div className="space-y-0.5">
                 <p className="font-semibold text-emerald-950">
                   Successfully saved {actressSaveReceipt.actressName} to database!
                 </p>
-                <p className="text-emerald-700 text-[11px]">
+                <p className="text-emerald-700 dark:text-emerald-400 text-[11px]">
                   Ingested {actressSaveReceipt.ingestedCount} new movies • {actressSaveReceipt.duplicateCount} duplicates filtered • Total in profile: {actressSaveReceipt.totalActressVideos}
                   {actressSaveReceipt.commitSha && ` • Commit: ${actressSaveReceipt.commitSha.slice(0, 7)}`}
                 </p>

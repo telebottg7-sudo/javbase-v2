@@ -472,7 +472,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ status, onNavigate }) => {
         {/* Card 4: Codes */}
         <div className="p-5 rounded-2xl bg-white dark:bg-[#101728] border border-slate-200 dark:border-[#1e293b] hover:border-slate-300 dark:hover:border-[#2b3a54] transition-all flex flex-col justify-between space-y-3 shadow-xs">
           <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/200/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
               <CodeIcon className="w-5 h-5" />
             </div>
             {/* Sparkline */}
@@ -526,7 +526,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ status, onNavigate }) => {
             <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-[#1e293b] space-y-2">
               <div className="flex items-center gap-1.5 text-xs">
                 <span className={`w-2 h-2 rounded-full ${
-                  (autoCommitStatus?.autoCommitEnabled ?? true) ? "bg-emerald-500" : "bg-amber-500"
+                  (autoCommitStatus?.autoCommitEnabled ?? true) ? "bg-emerald-50 dark:bg-emerald-900/200" : "bg-amber-500"
                 }`} />
                 <span className="font-medium text-emerald-600 dark:text-emerald-400">
                   {(autoCommitStatus?.autoCommitEnabled ?? true) ? "Active" : "Disabled"}
@@ -738,7 +738,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ status, onNavigate }) => {
           <div className="flex items-center gap-2">
             <span className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-50 dark:bg-emerald-900/200"></span>
             </span>
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">System Status</h3>
             <span className="text-xs text-slate-500 dark:text-slate-400 ml-1">Everything is running smoothly</span>
@@ -747,23 +747,23 @@ export const HomeView: React.FC<HomeViewProps> = ({ status, onNavigate }) => {
           {/* Status indicators flex */}
           <div className="flex flex-wrap items-center gap-4 text-xs text-slate-700 dark:text-slate-300">
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="w-2 h-2 rounded-full bg-emerald-50 dark:bg-emerald-900/200" />
               <span>GitHub Storage Connected</span>
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="w-2 h-2 rounded-full bg-emerald-50 dark:bg-emerald-900/200" />
               <span>Database Healthy</span>
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="w-2 h-2 rounded-full bg-emerald-50 dark:bg-emerald-900/200" />
               <span>API Services Online</span>
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="w-2 h-2 rounded-full bg-emerald-50 dark:bg-emerald-900/200" />
               <span>Cache Active</span>
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="w-2 h-2 rounded-full bg-emerald-50 dark:bg-emerald-900/200" />
               <span>Auto Commit Enabled</span>
             </span>
           </div>

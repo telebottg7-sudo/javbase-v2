@@ -70,7 +70,7 @@ export const DatabaseHealthGauges: React.FC<DatabaseHealthGaugesProps> = ({
         <div className="bg-white dark:bg-[#101728] border border-neutral-200 dark:border-[#1e293b]/90 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col justify-between relative overflow-hidden group hover:border-neutral-300 dark:hover:border-[#2b3a54] dark:border-[#2b3a54] transition-all">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+              <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 flex items-center justify-center text-emerald-600">
                 <Zap className="w-4 h-4" />
               </div>
               <div>
@@ -197,7 +197,7 @@ export const DatabaseHealthGauges: React.FC<DatabaseHealthGaugesProps> = ({
 
             {/* Active Lock Status Bar */}
             <div className="mt-3 flex items-center gap-2 text-[11px] font-mono text-neutral-600 dark:text-slate-400 bg-neutral-50 dark:bg-[#0b101a] px-2.5 py-1 rounded-lg border border-neutral-200 dark:border-[#1e293b]/60">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-emerald-50 dark:bg-emerald-900/200 animate-pulse" />
               <span>Queue Status: {perfMetrics?.writeQueue.activeWrites ? "Writing" : "Idle (Ready)"}</span>
             </div>
           </div>
@@ -235,16 +235,16 @@ export const DatabaseHealthGauges: React.FC<DatabaseHealthGaugesProps> = ({
 
             {/* Mini visual checklist */}
             <div className="mt-3 grid grid-cols-2 gap-1.5 text-[10px] font-mono">
-              <span className="flex items-center gap-1 text-emerald-700 bg-emerald-50/80 px-2 py-0.5 rounded">
+              <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20/80 px-2 py-0.5 rounded">
                 <CheckCircle2 className="w-3 h-3" /> codes.json
               </span>
-              <span className="flex items-center gap-1 text-emerald-700 bg-emerald-50/80 px-2 py-0.5 rounded">
+              <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20/80 px-2 py-0.5 rounded">
                 <CheckCircle2 className="w-3 h-3" /> videos.json
               </span>
-              <span className="flex items-center gap-1 text-emerald-700 bg-emerald-50/80 px-2 py-0.5 rounded">
+              <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20/80 px-2 py-0.5 rounded">
                 <CheckCircle2 className="w-3 h-3" /> actresses.json
               </span>
-              <span className="flex items-center gap-1 text-emerald-700 bg-emerald-50/80 px-2 py-0.5 rounded">
+              <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20/80 px-2 py-0.5 rounded">
                 <CheckCircle2 className="w-3 h-3" /> studios.json
               </span>
             </div>
@@ -323,7 +323,7 @@ export const DatabaseHealthGauges: React.FC<DatabaseHealthGaugesProps> = ({
               <button
                 key={item.name}
                 onClick={() => onNavigate && onNavigate(item.id)}
-                className="p-2.5 rounded-xl border border-neutral-100 bg-neutral-50/70 dark:bg-[#0b101a]/70 hover:bg-neutral-100 dark:hover:bg-slate-800 dark:bg-slate-800/90 hover:border-neutral-200 dark:border-[#1e293b] text-left transition-all group flex items-center justify-between"
+                className="p-2.5 rounded-xl border border-neutral-100 bg-neutral-50/70 dark:bg-[#0b101a]/70 hover:bg-neutral-100 dark:hover:bg-slate-800/90 hover:border-neutral-200 dark:border-[#1e293b] text-left transition-all group flex items-center justify-between"
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <div

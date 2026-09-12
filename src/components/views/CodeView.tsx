@@ -366,7 +366,7 @@ export const CodeView: React.FC<CodeViewProps> = ({ onNavigate }) => {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleCategoryClick(cat.category)}
-                          className="px-3 py-1 bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:bg-slate-200 text-white font-mono font-extrabold text-sm rounded-lg transition-colors cursor-pointer shadow-2xs flex items-center gap-1.5"
+                          className="px-3 py-1 bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-slate-200 text-white dark:text-slate-900 font-mono font-extrabold text-sm rounded-lg transition-colors cursor-pointer shadow-2xs flex items-center gap-1.5"
                         >
                           <span>{cat.category}</span>
                           <ArrowRight className="w-3.5 h-3.5 opacity-70" />
@@ -410,7 +410,7 @@ export const CodeView: React.FC<CodeViewProps> = ({ onNavigate }) => {
                             <button
                               key={num}
                               onClick={() => handleCategoryClick(cat.category, num)}
-                              className="px-2 py-0.5 bg-neutral-100 dark:bg-slate-800 hover:bg-neutral-900 dark:bg-white hover:text-white text-neutral-700 dark:text-slate-300 rounded text-xs font-mono font-semibold transition-colors cursor-pointer border border-neutral-200 dark:border-[#1e293b]"
+                              className="px-2 py-0.5 bg-neutral-100 dark:bg-slate-800 hover:bg-neutral-900 dark:hover:bg-white hover:text-white dark:text-slate-900 text-neutral-700 dark:text-slate-300 rounded text-xs font-mono font-semibold transition-colors cursor-pointer border border-neutral-200 dark:border-[#1e293b]"
                               title={`Open ${cat.category} #${num}`}
                             >
                               {num}
@@ -455,7 +455,7 @@ export const CodeView: React.FC<CodeViewProps> = ({ onNavigate }) => {
                   <button
                     id={`btn-open-category-${cat.category}`}
                     onClick={() => handleCategoryClick(cat.category)}
-                    className="w-full py-2 bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:bg-slate-200 text-white rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                    className="w-full py-2 bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-slate-200 text-white dark:text-slate-900 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
                   >
                     <span>Browse {cat.category}</span>
                     <ChevronRight className="w-3.5 h-3.5" />
@@ -558,7 +558,7 @@ export const CodeView: React.FC<CodeViewProps> = ({ onNavigate }) => {
                       <td className="px-4 py-3 text-right space-x-2">
                         <button
                           onClick={() => setHarvesterTarget(item.code)}
-                          className="inline-flex items-center justify-center p-1.5 text-neutral-500 dark:text-slate-400 hover:text-neutral-900 dark:text-white hover:bg-neutral-100 dark:hover:bg-slate-800 dark:bg-slate-800 rounded transition-colors cursor-pointer"
+                          className="inline-flex items-center justify-center p-1.5 text-neutral-500 dark:text-slate-400 hover:text-neutral-900 dark:text-white hover:bg-neutral-100 dark:hover:bg-slate-800 rounded transition-colors cursor-pointer"
                           title="Inspect Streams"
                         >
                           <Download className="w-4 h-4" />
@@ -621,7 +621,7 @@ export const CodeView: React.FC<CodeViewProps> = ({ onNavigate }) => {
               <button
                 type="submit"
                 disabled={checkLoading || !checkInput.trim()}
-                className="px-4 py-2 bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:bg-slate-200 disabled:opacity-50 text-white rounded-lg text-xs font-medium transition-colors shadow-2xs cursor-pointer"
+                className="px-4 py-2 bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-slate-200 disabled:opacity-50 text-white dark:text-slate-900 rounded-lg text-xs font-medium transition-colors shadow-2xs cursor-pointer"
               >
                 {checkLoading ? "Checking..." : "Verify Code"}
               </button>
@@ -661,7 +661,7 @@ export const CodeView: React.FC<CodeViewProps> = ({ onNavigate }) => {
                       Invalid Code Format
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded text-xs font-medium">
+                    <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 px-2 py-0.5 rounded text-xs font-medium">
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       Available (Unique & Safe to Ingest)
                     </span>
@@ -778,7 +778,7 @@ export const CodeView: React.FC<CodeViewProps> = ({ onNavigate }) => {
                   key={cat.category}
                   id={`btn-prefix-${cat.category}`}
                   onClick={() => handleCategoryClick(cat.category)}
-                  className="bg-white dark:bg-[#101728] hover:bg-neutral-900 dark:bg-white text-neutral-900 dark:text-white hover:text-white border border-neutral-200 dark:border-[#1e293b] hover:border-neutral-900 rounded-xl p-3.5 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between text-left group cursor-pointer"
+                  className="bg-white dark:bg-[#101728] hover:bg-neutral-900 dark:hover:bg-white text-neutral-900 dark:text-white hover:text-white dark:text-slate-900 border border-neutral-200 dark:border-[#1e293b] hover:border-neutral-900 rounded-xl p-3.5 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between text-left group cursor-pointer"
                 >
                   <div className="flex items-center justify-between gap-1 w-full mb-2">
                     <span className="font-mono text-base font-extrabold tracking-wider group-hover:text-amber-400 transition-colors">

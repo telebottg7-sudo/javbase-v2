@@ -114,7 +114,7 @@ export const ScraperVideoCard: React.FC<ScraperVideoCardProps> = ({
           <button
             id={`btn-inspect-${item.code || "item"}`}
             onClick={() => onInspect(item)}
-            className="flex-1 py-1.5 px-2 bg-neutral-50 dark:bg-[#0b101a] hover:bg-neutral-100 dark:hover:bg-slate-800 dark:bg-slate-800 text-neutral-700 dark:text-slate-300 text-xs font-medium rounded-lg border border-neutral-200 dark:border-[#1e293b] transition-colors flex items-center justify-center gap-1.5"
+            className="flex-1 py-1.5 px-2 bg-neutral-50 dark:bg-[#0b101a] hover:bg-neutral-100 dark:hover:bg-slate-800 text-neutral-700 dark:text-slate-300 text-xs font-medium rounded-lg border border-neutral-200 dark:border-[#1e293b] transition-colors flex items-center justify-center gap-1.5"
           >
             <ShieldCheck className="w-3.5 h-3.5 text-neutral-500 dark:text-slate-400" />
             <span>Inspect</span>
@@ -138,8 +138,8 @@ export const ScraperVideoCard: React.FC<ScraperVideoCardProps> = ({
             onClick={() => onIngest(item)}
             className={`py-1.5 px-2.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1 shrink-0 ${
               item.isDuplicate
-                ? "bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default"
-                : "bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:bg-slate-200 text-white shadow-xs"
+                ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 cursor-default"
+                : "bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-slate-200 text-white dark:text-slate-900 shadow-xs"
             }`}
           >
             {isIngesting ? (

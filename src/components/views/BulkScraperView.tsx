@@ -896,7 +896,7 @@ export const BulkScraperView: React.FC<BulkScraperViewProps> = ({ onNavigate, in
           className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-all flex items-center gap-2 ${
             activeTab === "bulk"
               ? "bg-neutral-900 dark:bg-white text-white dark:text-slate-900 shadow-xs"
-              : "bg-white dark:bg-[#101728] text-neutral-600 dark:text-slate-400 hover:text-neutral-900 dark:hover:text-white border border-neutral-200 dark:border-[#1e293b] hover:bg-neutral-50 dark:hover:bg-[#1e293b] dark:bg-[#0b101a]"
+              : "bg-white dark:bg-[#101728] text-neutral-600 dark:text-slate-400 hover:text-neutral-900 dark:hover:text-white border border-neutral-200 dark:border-[#1e293b] hover:bg-neutral-50 dark:hover:bg-[#1e293b]"
           }`}
         >
           <Layers className="w-3.5 h-3.5" />
@@ -909,7 +909,7 @@ export const BulkScraperView: React.FC<BulkScraperViewProps> = ({ onNavigate, in
           className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-all flex items-center gap-2 ${
             activeTab === "catalog"
               ? "bg-neutral-900 dark:bg-white text-white dark:text-slate-900 shadow-xs"
-              : "bg-white dark:bg-[#101728] text-neutral-600 dark:text-slate-400 hover:text-neutral-900 dark:hover:text-white border border-neutral-200 dark:border-[#1e293b] hover:bg-neutral-50 dark:hover:bg-[#1e293b] dark:bg-[#0b101a]"
+              : "bg-white dark:bg-[#101728] text-neutral-600 dark:text-slate-400 hover:text-neutral-900 dark:hover:text-white border border-neutral-200 dark:border-[#1e293b] hover:bg-neutral-50 dark:hover:bg-[#1e293b]"
           }`}
         >
           <Globe className="w-3.5 h-3.5" />
@@ -922,7 +922,7 @@ export const BulkScraperView: React.FC<BulkScraperViewProps> = ({ onNavigate, in
           className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-all flex items-center gap-2 ${
             activeTab === "search"
               ? "bg-neutral-900 dark:bg-white text-white dark:text-slate-900 shadow-xs"
-              : "bg-white dark:bg-[#101728] text-neutral-600 dark:text-slate-400 hover:text-neutral-900 dark:hover:text-white border border-neutral-200 dark:border-[#1e293b] hover:bg-neutral-50 dark:hover:bg-[#1e293b] dark:bg-[#0b101a]"
+              : "bg-white dark:bg-[#101728] text-neutral-600 dark:text-slate-400 hover:text-neutral-900 dark:hover:text-white border border-neutral-200 dark:border-[#1e293b] hover:bg-neutral-50 dark:hover:bg-[#1e293b]"
           }`}
         >
           <Search className="w-3.5 h-3.5" />
@@ -938,7 +938,7 @@ export const BulkScraperView: React.FC<BulkScraperViewProps> = ({ onNavigate, in
           className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-all flex items-center gap-2 ${
             activeTab === "actresses"
               ? "bg-neutral-900 dark:bg-white text-white dark:text-slate-900 shadow-xs"
-              : "bg-white dark:bg-[#101728] text-neutral-600 dark:text-slate-400 hover:text-neutral-900 dark:hover:text-white border border-neutral-200 dark:border-[#1e293b] hover:bg-neutral-50 dark:hover:bg-[#1e293b] dark:bg-[#0b101a]"
+              : "bg-white dark:bg-[#101728] text-neutral-600 dark:text-slate-400 hover:text-neutral-900 dark:hover:text-white border border-neutral-200 dark:border-[#1e293b] hover:bg-neutral-50 dark:hover:bg-[#1e293b]"
           }`}
         >
           <User className="w-3.5 h-3.5" />
@@ -954,7 +954,7 @@ export const BulkScraperView: React.FC<BulkScraperViewProps> = ({ onNavigate, in
           className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-all flex items-center gap-2 ${
             activeTab === "studios"
               ? "bg-neutral-900 dark:bg-white text-white dark:text-slate-900 shadow-xs"
-              : "bg-white dark:bg-[#101728] text-neutral-600 dark:text-slate-400 hover:text-neutral-900 dark:hover:text-white border border-neutral-200 dark:border-[#1e293b] hover:bg-neutral-50 dark:hover:bg-[#1e293b] dark:bg-[#0b101a]"
+              : "bg-white dark:bg-[#101728] text-neutral-600 dark:text-slate-400 hover:text-neutral-900 dark:hover:text-white border border-neutral-200 dark:border-[#1e293b] hover:bg-neutral-50 dark:hover:bg-[#1e293b]"
           }`}
         >
           <Building className="w-3.5 h-3.5" />

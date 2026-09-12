@@ -23,7 +23,7 @@ export const IngestionBanner: React.FC<IngestionBannerProps> = ({
       id="scraper-ingestion-banner"
       className={`p-4 rounded-xl border flex items-start justify-between gap-3 text-sm ${
         banner.type === "success"
-          ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+          ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/50 text-emerald-900"
           : banner.type === "error"
           ? "bg-red-50 border-red-200 text-red-900"
           : "bg-blue-50 border-blue-200 text-blue-900"

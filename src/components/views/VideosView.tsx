@@ -108,7 +108,7 @@ export const VideosView: React.FC<VideosViewProps> = ({ onNavigate }) => {
             <button
               onClick={() => fetchVideos(page, searchQuery, actressFilter, studioFilter)}
               disabled={loading}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral-300 dark:border-[#2b3a54] hover:bg-neutral-50 dark:hover:bg-[#1e293b] dark:bg-[#0b101a] text-xs font-medium text-neutral-700 dark:text-slate-300 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral-300 dark:border-[#2b3a54] hover:bg-neutral-50 dark:hover:bg-[#1e293b] text-xs font-medium text-neutral-700 dark:text-slate-300 transition-colors"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
               <span>Refresh</span>
@@ -116,7 +116,7 @@ export const VideosView: React.FC<VideosViewProps> = ({ onNavigate }) => {
             {onNavigate && (
               <button
                 onClick={() => onNavigate("bulk-scraper")}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-neutral-900 dark:bg-white text-white dark:text-slate-900 hover:bg-neutral-800 dark:bg-slate-200 text-xs font-medium transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-neutral-900 dark:bg-white text-white dark:text-slate-900 hover:bg-neutral-800 dark:hover:bg-slate-200 text-xs font-medium transition-colors"
               >
                 <Layers className="w-3.5 h-3.5" />
                 <span>Ingest via Scraper</span>
@@ -208,7 +208,7 @@ export const VideosView: React.FC<VideosViewProps> = ({ onNavigate }) => {
           {onNavigate && (
             <button
               onClick={() => onNavigate("bulk-scraper")}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-neutral-900 dark:bg-white text-white dark:text-slate-900 hover:bg-neutral-800 dark:bg-slate-200 text-xs font-medium transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-neutral-900 dark:bg-white text-white dark:text-slate-900 hover:bg-neutral-800 dark:hover:bg-slate-200 text-xs font-medium transition-colors"
             >
               <Layers className="w-3.5 h-3.5" />
               <span>Go to Javtiful Scraper</span>
@@ -253,7 +253,7 @@ export const VideosView: React.FC<VideosViewProps> = ({ onNavigate }) => {
                   {/* Top Code Badge */}
                   {vid.code && (
                     <div className="absolute top-2 left-2">
-                      <span className="px-2 py-0.5 rounded-md bg-neutral-900/90 dark:bg-white/10 backdrop-blur-xs text-white text-[11px] font-mono font-semibold shadow-xs">
+                      <span className="px-2 py-0.5 rounded-md bg-neutral-900/90 dark:bg-white/10 backdrop-blur-xs text-white dark:text-slate-900 text-[11px] font-mono font-semibold shadow-xs">
                         {vid.code}
                       </span>
                     </div>
@@ -335,7 +335,7 @@ export const VideosView: React.FC<VideosViewProps> = ({ onNavigate }) => {
         <div className="fixed inset-0 z-50 bg-neutral-900/60 dark:bg-neutral-950/80 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white dark:bg-[#101728] rounded-2xl border border-neutral-200 dark:border-[#1e293b] shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             {/* Modal Header */}
-            <div className="p-5 border-b border-neutral-200 dark:border-[#1e293b] flex items-center justify-between gap-4 bg-neutral-50 dark:bg-[#0b101a] shrink-0">
+            <div className="p-5 border-b border-neutral-200 dark:border-[#1e293b] flex items-center justify-between gap-4 bg-neutral-50 shrink-0">
               <div className="flex items-center gap-2 min-w-0">
                 {selectedVideo.code && (
                   <span className="px-2.5 py-1 rounded-md bg-neutral-900 dark:bg-white text-white dark:text-slate-900 font-mono text-xs font-semibold">
@@ -370,7 +370,7 @@ export const VideosView: React.FC<VideosViewProps> = ({ onNavigate }) => {
 
               {/* Video Attributes Table */}
               <div className="rounded-xl border border-neutral-200 dark:border-[#1e293b] overflow-hidden divide-y divide-neutral-100 text-xs">
-                <div className="p-3 bg-neutral-50 dark:bg-[#0b101a] flex items-center justify-between">
+                <div className="p-3 bg-neutral-50 flex items-center justify-between">
                   <span className="text-neutral-500 dark:text-slate-400 font-medium">Canonical Code</span>
                   <span className="font-mono font-semibold text-neutral-900 dark:text-white">{selectedVideo.code}</span>
                 </div>
@@ -380,7 +380,7 @@ export const VideosView: React.FC<VideosViewProps> = ({ onNavigate }) => {
                     {selectedVideo.actressName ? `${selectedVideo.actressName} (${selectedVideo.actressSlug})` : "None"}
                   </span>
                 </div>
-                <div className="p-3 bg-neutral-50 dark:bg-[#0b101a] flex items-center justify-between">
+                <div className="p-3 bg-neutral-50 flex items-center justify-between">
                   <span className="text-neutral-500 dark:text-slate-400 font-medium">Studio / Maker</span>
                   <span className="font-medium text-neutral-900 dark:text-white">
                     {selectedVideo.studioName ? `${selectedVideo.studioName} (${selectedVideo.studioSlug})` : "None"}
@@ -390,7 +390,7 @@ export const VideosView: React.FC<VideosViewProps> = ({ onNavigate }) => {
                   <span className="text-neutral-500 dark:text-slate-400 font-medium">Release Date</span>
                   <span className="font-mono text-neutral-900 dark:text-white">{selectedVideo.releaseDate || "N/A"}</span>
                 </div>
-                <div className="p-3 bg-neutral-50 dark:bg-[#0b101a] flex items-center justify-between">
+                <div className="p-3 bg-neutral-50 flex items-center justify-between">
                   <span className="text-neutral-500 dark:text-slate-400 font-medium">Duration</span>
                   <span className="font-mono text-neutral-900 dark:text-white">{selectedVideo.duration || "N/A"}</span>
                 </div>
@@ -417,7 +417,7 @@ export const VideosView: React.FC<VideosViewProps> = ({ onNavigate }) => {
                   </span>
                   <button
                     onClick={copyJson}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] rounded border border-neutral-300 dark:border-[#2b3a54] hover:bg-neutral-50 dark:hover:bg-[#1e293b] dark:bg-[#0b101a] text-neutral-700 dark:text-slate-300 transition-colors"
+                    className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] rounded border border-neutral-300 dark:border-[#2b3a54] hover:bg-neutral-50 dark:hover:bg-[#1e293b] text-neutral-700 dark:text-slate-300 transition-colors"
                   >
                     {copied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
                     <span>{copied ? "Copied" : "Copy"}</span>
@@ -430,13 +430,13 @@ export const VideosView: React.FC<VideosViewProps> = ({ onNavigate }) => {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-neutral-200 dark:border-[#1e293b] bg-neutral-50 dark:bg-[#0b101a] flex items-center justify-between text-xs gap-2">
+            <div className="p-4 border-t border-neutral-200 dark:border-[#1e293b] bg-neutral-50 flex items-center justify-between text-xs gap-2">
               <div className="flex items-center gap-2">
                 <a
                   href={selectedVideo.postUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-[#2b3a54] bg-white dark:bg-[#101728] hover:bg-neutral-50 dark:hover:bg-[#1e293b] dark:bg-[#0b101a] text-neutral-700 dark:text-slate-300 font-medium"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-[#2b3a54] bg-white dark:bg-[#101728] hover:bg-neutral-50 dark:hover:bg-[#1e293b] text-neutral-700 dark:text-slate-300 font-medium"
                 >
                   <span>Open Source Link</span>
                   <ExternalLink className="w-3 h-3" />
@@ -448,7 +448,7 @@ export const VideosView: React.FC<VideosViewProps> = ({ onNavigate }) => {
                     setSelectedVideo(null);
                     setHarvesterTarget(target);
                   }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:bg-slate-200 text-white font-medium shadow-xs"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-slate-200 text-white dark:text-slate-900 font-medium shadow-xs"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Harvest Streams & Media</span>
@@ -456,7 +456,7 @@ export const VideosView: React.FC<VideosViewProps> = ({ onNavigate }) => {
               </div>
               <button
                 onClick={() => setSelectedVideo(null)}
-                className="px-4 py-1.5 rounded-lg border border-neutral-300 dark:border-[#2b3a54] bg-white dark:bg-[#101728] text-neutral-700 dark:text-slate-300 hover:bg-neutral-50 dark:hover:bg-[#1e293b] dark:bg-[#0b101a] font-medium transition-colors"
+                className="px-4 py-1.5 rounded-lg border border-neutral-300 dark:border-[#2b3a54] bg-white dark:bg-[#101728] text-neutral-700 dark:text-slate-300 hover:bg-neutral-50 dark:hover:bg-[#1e293b] font-medium transition-colors"
               >
                 Close
               </button>

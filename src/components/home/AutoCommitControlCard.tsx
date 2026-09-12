@@ -121,7 +121,7 @@ export const AutoCommitControlCard: React.FC<AutoCommitControlCardProps> = ({
           <div
             className={`w-10 h-10 rounded-xl flex items-center justify-center ${
               autoCommitEnabled
-                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50"
                 : "bg-amber-50 text-amber-700 border border-amber-200"
             }`}
           >
@@ -131,8 +131,8 @@ export const AutoCommitControlCard: React.FC<AutoCommitControlCardProps> = ({
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-bold text-neutral-950 dark:text-white">GitHub Auto-Commit Control</h3>
               {autoCommitEnabled ? (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/200 animate-pulse" />
                   Auto-Commit Active
                 </span>
               ) : (
@@ -199,7 +199,7 @@ export const AutoCommitControlCard: React.FC<AutoCommitControlCardProps> = ({
         <div
           className={`p-3 rounded-xl text-xs flex items-center gap-2 border ${
             feedback.type === "success"
-              ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+              ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 border-emerald-200 dark:border-emerald-800/50"
               : "bg-rose-50 text-rose-800 border-rose-200"
           }`}
         >
@@ -264,7 +264,7 @@ export const AutoCommitControlCard: React.FC<AutoCommitControlCardProps> = ({
                       className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${
                         file.operation === "delete"
                           ? "bg-rose-100 text-rose-700"
-                          : "bg-emerald-100 text-emerald-700"
+                          : "bg-emerald-100 text-emerald-700 dark:text-emerald-400"
                       }`}
                     >
                       {file.operation}
@@ -295,7 +295,7 @@ export const AutoCommitControlCard: React.FC<AutoCommitControlCardProps> = ({
               type="button"
               onClick={handleCommit}
               disabled={isCommitting}
-              className="px-4 py-2 rounded-xl bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:bg-slate-200 active:bg-neutral-950 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-colors disabled:opacity-50"
+              className="px-4 py-2 rounded-xl bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-slate-200 active:bg-neutral-950 text-white dark:text-slate-900 text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-colors disabled:opacity-50"
             >
               {isCommitting ? (
                 <>
@@ -315,7 +315,7 @@ export const AutoCommitControlCard: React.FC<AutoCommitControlCardProps> = ({
               type="button"
               onClick={handleDiscard}
               disabled={isDiscarding}
-              className="px-3 py-2 rounded-xl border border-neutral-300 dark:border-[#2b3a54] hover:bg-neutral-100 dark:hover:bg-slate-800 dark:bg-slate-800 text-neutral-700 dark:text-slate-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
+              className="px-3 py-2 rounded-xl border border-neutral-300 dark:border-[#2b3a54] hover:bg-neutral-100 dark:hover:bg-slate-800 text-neutral-700 dark:text-slate-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
             >
               {isDiscarding ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />

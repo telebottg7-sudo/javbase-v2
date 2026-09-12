@@ -347,7 +347,7 @@ export const CodeCategoryDetailView: React.FC<CodeCategoryDetailViewProps> = ({
               <button
                 id="btn-back-to-categories"
                 onClick={onBack}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-[#2b3a54] hover:bg-neutral-100 dark:hover:bg-slate-800 dark:bg-slate-800 text-xs font-medium text-neutral-700 dark:text-slate-300 transition-colors cursor-pointer shadow-2xs"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-[#2b3a54] hover:bg-neutral-100 dark:hover:bg-slate-800 text-xs font-medium text-neutral-700 dark:text-slate-300 transition-colors cursor-pointer shadow-2xs"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>All Categories</span>
@@ -365,7 +365,7 @@ export const CodeCategoryDetailView: React.FC<CodeCategoryDetailViewProps> = ({
               </h1>
               {data && (
                 <div className="flex items-center gap-2 text-xs font-medium">
-                  <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-md">
+                  <span className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 px-2 py-0.5 rounded-md">
                     {data.totalCount} Registered Releases
                   </span>
                   {data.minNumber > 0 && data.maxNumber > 0 && (
@@ -382,7 +382,7 @@ export const CodeCategoryDetailView: React.FC<CodeCategoryDetailViewProps> = ({
             <button
               id="btn-header-search-source-website"
               onClick={() => handleSearchSourceWebsite()}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:bg-slate-200 text-white text-xs font-semibold transition-colors shadow-2xs cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-slate-200 text-white dark:text-slate-900 text-xs font-semibold transition-colors shadow-2xs cursor-pointer"
               title="Search live source website directly for this code or category"
             >
               <Globe className="w-3.5 h-3.5 text-amber-400" />
@@ -478,7 +478,7 @@ export const CodeCategoryDetailView: React.FC<CodeCategoryDetailViewProps> = ({
                     className={`px-2 py-1 rounded-lg font-mono text-xs font-semibold transition-all cursor-pointer shadow-2xs flex items-center gap-1 ${
                       isSelected
                         ? "bg-emerald-600 text-white ring-2 ring-emerald-600 ring-offset-1 scale-105"
-                        : "bg-white dark:bg-[#101728] text-neutral-800 dark:text-slate-200 border border-neutral-300 dark:border-[#2b3a54] hover:border-neutral-900 hover:bg-neutral-100 dark:hover:bg-slate-800 dark:bg-slate-800 hover:text-neutral-900 dark:text-white"
+                        : "bg-white dark:bg-[#101728] text-neutral-800 dark:text-slate-200 border border-neutral-300 dark:border-[#2b3a54] hover:border-neutral-900 hover:bg-neutral-100 dark:hover:bg-slate-800 hover:text-neutral-900 dark:text-white"
                     }`}
                   >
                     <span>{numItem.number}</span>
@@ -622,7 +622,7 @@ export const CodeCategoryDetailView: React.FC<CodeCategoryDetailViewProps> = ({
               type="button"
               id="btn-search-code-source"
               onClick={() => handleSearchSourceWebsite()}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:bg-slate-200 text-white text-xs font-semibold transition-colors shadow-2xs cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-slate-200 text-white dark:text-slate-900 text-xs font-semibold transition-colors shadow-2xs cursor-pointer"
               title="Search live source website directly for this code"
             >
               <Globe className="w-3.5 h-3.5 text-amber-400" />
@@ -721,7 +721,7 @@ export const CodeCategoryDetailView: React.FC<CodeCategoryDetailViewProps> = ({
           </p>
           <button
             onClick={handleClearFilters}
-            className="px-4 py-2 bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:bg-slate-200 text-white rounded-lg text-xs font-medium cursor-pointer shadow-2xs"
+            className="px-4 py-2 bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-slate-200 text-white dark:text-slate-900 rounded-lg text-xs font-medium cursor-pointer shadow-2xs"
           >
             Reset Filters
           </button>
@@ -737,7 +737,7 @@ export const CodeCategoryDetailView: React.FC<CodeCategoryDetailViewProps> = ({
               {/* Top Banner with Number badge & Code */}
               <div className="bg-neutral-900 dark:bg-white text-white dark:text-slate-900 px-3.5 py-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded bg-emerald-500 text-white font-mono font-extrabold text-xs">
+                  <span className="px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-900/200 text-white font-mono font-extrabold text-xs">
                     #{item.number > 0 ? item.number : item.numberFormatted}
                   </span>
                   <span className="font-mono font-bold text-xs tracking-wider text-neutral-100 dark:text-slate-700">
@@ -824,7 +824,7 @@ export const CodeCategoryDetailView: React.FC<CodeCategoryDetailViewProps> = ({
                   </span>
                   <button
                     onClick={() => setHarvesterTarget(item.code)}
-                    className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-800 font-semibold cursor-pointer"
+                    className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 font-semibold cursor-pointer"
                   >
                     <span>Streams</span>
                     <ChevronRight className="w-3 h-3" />
@@ -857,7 +857,7 @@ export const CodeCategoryDetailView: React.FC<CodeCategoryDetailViewProps> = ({
                     <span className="text-xs font-mono">{item.code}</span>
                   </div>
                 )}
-                <div className="absolute top-2 left-2 bg-neutral-900/90 dark:bg-white/10 backdrop-blur-xs text-white px-2 py-0.5 rounded text-xs font-mono font-bold">
+                <div className="absolute top-2 left-2 bg-neutral-900/90 dark:bg-white/10 backdrop-blur-xs text-white dark:text-slate-900 px-2 py-0.5 rounded text-xs font-mono font-bold">
                   #{item.number > 0 ? item.number : item.numberFormatted} • {item.code}
                 </div>
               </div>
@@ -889,7 +889,7 @@ export const CodeCategoryDetailView: React.FC<CodeCategoryDetailViewProps> = ({
                   </span>
                   <button
                     onClick={() => setHarvesterTarget(item.code)}
-                    className="px-3 py-1.5 bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:bg-slate-200 text-white rounded-lg text-xs font-medium transition-colors shadow-2xs flex items-center gap-1.5 cursor-pointer"
+                    className="px-3 py-1.5 bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-slate-200 text-white dark:text-slate-900 rounded-lg text-xs font-medium transition-colors shadow-2xs flex items-center gap-1.5 cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>Inspect</span>
@@ -955,7 +955,7 @@ export const CodeCategoryDetailView: React.FC<CodeCategoryDetailViewProps> = ({
                     <td className="px-4 py-3 text-right space-x-2">
                       <button
                         onClick={() => setHarvesterTarget(item.code)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded text-xs font-semibold transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 rounded text-xs font-semibold transition-colors cursor-pointer"
                         title="Inspect Streams"
                       >
                         <Download className="w-3 h-3" />
@@ -1018,7 +1018,7 @@ export const CodeCategoryDetailView: React.FC<CodeCategoryDetailViewProps> = ({
                     </h2>
                     {searchMissingLoading ? (
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold font-mono border border-emerald-300 animate-pulse">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                        <span className="w-2 h-2 rounded-full bg-emerald-50 dark:bg-emerald-900/200 animate-ping" />
                         LIVE STREAMING
                       </span>
                     ) : (
@@ -1036,7 +1036,7 @@ export const CodeCategoryDetailView: React.FC<CodeCategoryDetailViewProps> = ({
               {!searchMissingLoading && (
                 <button
                   onClick={() => setShowMissingModal(false)}
-                  className="p-1.5 text-neutral-400 dark:text-slate-500 hover:text-neutral-700 dark:text-slate-300 hover:bg-neutral-100 dark:hover:bg-slate-800 dark:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+                  className="p-1.5 text-neutral-400 dark:text-slate-500 hover:text-neutral-700 dark:text-slate-300 hover:bg-neutral-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -1157,7 +1157,7 @@ export const CodeCategoryDetailView: React.FC<CodeCategoryDetailViewProps> = ({
                         textColor = "text-rose-300 font-bold";
                       } else if (log.level === "complete") {
                         levelBadge = (
-                          <span className="px-1.5 py-0.2 rounded bg-emerald-500 text-slate-950 font-extrabold text-[10px]">
+                          <span className="px-1.5 py-0.2 rounded bg-emerald-50 dark:bg-emerald-900/200 text-slate-950 font-extrabold text-[10px]">
                             DONE
                           </span>
                         );
@@ -1191,7 +1191,7 @@ export const CodeCategoryDetailView: React.FC<CodeCategoryDetailViewProps> = ({
                       <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                       <span>Live Discovered Releases ({liveFoundItems.length})</span>
                     </h4>
-                    <span className="text-[11px] text-emerald-700 font-medium bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                    <span className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 px-2 py-0.5 rounded-full">
                       Ingesting into database
                     </span>
                   </div>
@@ -1210,7 +1210,7 @@ export const CodeCategoryDetailView: React.FC<CodeCategoryDetailViewProps> = ({
                             className="w-11 h-11 object-cover rounded-lg shrink-0 border border-neutral-200 dark:border-[#1e293b]"
                           />
                         ) : (
-                          <div className="w-11 h-11 bg-neutral-900 dark:bg-white rounded-lg flex items-center justify-center shrink-0 text-white font-mono text-[10px] font-bold">
+                          <div className="w-11 h-11 bg-neutral-900 dark:bg-white rounded-lg flex items-center justify-center shrink-0 text-white dark:text-slate-900 font-mono text-[10px] font-bold">
                             {item.code}
                           </div>
                         )}
@@ -1252,9 +1252,9 @@ export const CodeCategoryDetailView: React.FC<CodeCategoryDetailViewProps> = ({
                             {missingSearchReport.searchedCount}
                           </div>
                         </div>
-                        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
-                          <div className="text-[11px] font-medium text-emerald-700">Found & Saved</div>
-                          <div className="text-lg font-extrabold text-emerald-700 font-mono">
+                        <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-xl">
+                          <div className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400">Found & Saved</div>
+                          <div className="text-lg font-extrabold text-emerald-700 dark:text-emerald-400 font-mono">
                             {missingSearchReport.foundCount}
                           </div>
                         </div>
@@ -1266,7 +1266,7 @@ export const CodeCategoryDetailView: React.FC<CodeCategoryDetailViewProps> = ({
                         </div>
                       </div>
 
-                      <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 font-medium flex items-center gap-2">
+                      <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-xl text-xs text-emerald-900 font-medium flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                         <span>{missingSearchReport.message}</span>
                       </div>
@@ -1301,7 +1301,7 @@ export const CodeCategoryDetailView: React.FC<CodeCategoryDetailViewProps> = ({
 
                   <button
                     onClick={() => setShowMissingModal(false)}
-                    className="px-4 py-2 bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:bg-slate-200 text-white rounded-xl text-xs font-semibold cursor-pointer shadow-2xs transition-all"
+                    className="px-4 py-2 bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-slate-200 text-white dark:text-slate-900 rounded-xl text-xs font-semibold cursor-pointer shadow-2xs transition-all"
                   >
                     Close & View Updated Catalog
                   </button>

@@ -216,7 +216,7 @@ export const EntityCatalogView: React.FC<EntityCatalogViewProps> = ({
             {onNavigate && (
               <button
                 onClick={() => onNavigate("bulk-scraper")}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-neutral-900 dark:bg-white text-white dark:text-slate-900 hover:bg-neutral-800 dark:bg-slate-200 text-xs font-medium transition-colors shadow-xs"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-neutral-900 dark:bg-white text-white dark:text-slate-900 hover:bg-neutral-800 dark:hover:bg-slate-200 text-xs font-medium transition-colors shadow-xs"
               >
                 <Layers className="w-3.5 h-3.5" />
                 <span>Ingest</span>
@@ -276,7 +276,7 @@ export const EntityCatalogView: React.FC<EntityCatalogViewProps> = ({
           {onNavigate && (
             <button
               onClick={() => onNavigate("bulk-scraper")}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-neutral-900 dark:bg-white text-white dark:text-slate-900 hover:bg-neutral-800 dark:bg-slate-200 text-xs font-medium transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-neutral-900 dark:bg-white text-white dark:text-slate-900 hover:bg-neutral-800 dark:hover:bg-slate-200 text-xs font-medium transition-colors"
             >
               <Layers className="w-3.5 h-3.5" />
               <span>Go to Bulk Scraper</span>
@@ -553,7 +553,7 @@ export const EntityCatalogView: React.FC<EntityCatalogViewProps> = ({
                   setSelectedItem(null);
                   setEntityDetails(null);
                 }}
-                className="px-4 py-1.5 rounded-lg bg-neutral-900 dark:bg-white text-white dark:text-slate-900 hover:bg-neutral-800 dark:bg-slate-200 text-xs font-medium transition-colors shadow-2xs"
+                className="px-4 py-1.5 rounded-lg bg-neutral-900 dark:bg-white text-white dark:text-slate-900 hover:bg-neutral-800 dark:hover:bg-slate-200 text-xs font-medium transition-colors shadow-2xs"
               >
                 Close
               </button>

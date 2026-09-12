@@ -75,7 +75,7 @@ export const SearchScraperTab: React.FC<SearchScraperTabProps> = ({
               id="badge-search-autocommit-status"
               className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border flex items-center gap-1.5 ${
                 autoCommitEnabled
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50"
                   : "bg-amber-50 text-amber-700 border-amber-200"
               }`}
               title={
@@ -111,7 +111,7 @@ export const SearchScraperTab: React.FC<SearchScraperTabProps> = ({
                 id="btn-execute-scraper-search"
                 type="submit"
                 disabled={searchLoading || autoSaving || !searchQuery.trim()}
-                className="flex-1 sm:flex-none px-4 py-2.5 bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:bg-slate-200 disabled:opacity-50 text-white rounded-xl text-xs font-medium transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer"
+                className="flex-1 sm:flex-none px-4 py-2.5 bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-slate-200 disabled:opacity-50 text-white dark:text-slate-900 rounded-xl text-xs font-medium transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer"
               >
                 {searchLoading ? (
                   <>
@@ -222,7 +222,7 @@ export const SearchScraperTab: React.FC<SearchScraperTabProps> = ({
               </span>
               <span className="text-neutral-300 dark:text-slate-500">|</span>
               <span>
-                <strong className="text-emerald-700">{uniqueCount}</strong> new /{" "}
+                <strong className="text-emerald-700 dark:text-emerald-400">{uniqueCount}</strong> new /{" "}
                 <strong className="text-neutral-700 dark:text-slate-300">{searchResult.duplicateCount}</strong> in database
               </span>
             </div>
@@ -259,7 +259,7 @@ export const SearchScraperTab: React.FC<SearchScraperTabProps> = ({
                   id="btn-auto-crawl-next-pages"
                   onClick={() => onAutoSearchAndSave(3)}
                   disabled={autoSaving || searchLoading}
-                  className="px-3.5 py-2 bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:bg-slate-200 disabled:opacity-40 text-white rounded-xl text-xs font-medium transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                  className="px-3.5 py-2 bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-slate-200 disabled:opacity-40 text-white dark:text-slate-900 rounded-xl text-xs font-medium transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
                   title="Follow pagination and crawl next 3 pages automatically"
                 >
                   <Layers className="w-3.5 h-3.5" />

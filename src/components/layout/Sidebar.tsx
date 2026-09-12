@@ -151,7 +151,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-50 dark:bg-emerald-900/200"></span>
                 </span>
                 <span className="font-semibold text-slate-900 dark:text-white">System Online</span>
               </div>
@@ -164,7 +164,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             >
               <span className="relative flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-50 dark:bg-emerald-900/200"></span>
               </span>
             </div>
           )}

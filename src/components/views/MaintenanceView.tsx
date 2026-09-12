@@ -155,7 +155,7 @@ export const MaintenanceView: React.FC = () => {
 
       {/* Rebuild & Repair Result Banners */}
       {rebuildResult && (
-        <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50 text-xs text-emerald-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="p-4 rounded-xl border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-900/20 text-xs text-emerald-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <div>
@@ -206,7 +206,7 @@ export const MaintenanceView: React.FC = () => {
           </div>
           <div
             className={`text-base font-bold mt-1 ${
-              report?.healthy ? "text-emerald-700" : "text-amber-700"
+              report?.healthy ? "text-emerald-700 dark:text-emerald-400" : "text-amber-700"
             }`}
           >
             {report?.healthy ? "Synchronized" : "Action Needed"}
@@ -234,7 +234,7 @@ export const MaintenanceView: React.FC = () => {
           </div>
           <div
             className={`text-base font-bold font-mono mt-1 ${
-              report?.summary.duplicateCodesCount ? "text-rose-600" : "text-emerald-700"
+              report?.summary.duplicateCodesCount ? "text-rose-600" : "text-emerald-700 dark:text-emerald-400"
             }`}
           >
             {report?.summary.duplicateCodesCount || 0}
@@ -249,7 +249,7 @@ export const MaintenanceView: React.FC = () => {
           </div>
           <div
             className={`text-base font-bold font-mono mt-1 ${
-              report?.summary.orphanFilesCount ? "text-amber-600" : "text-emerald-700"
+              report?.summary.orphanFilesCount ? "text-amber-600" : "text-emerald-700 dark:text-emerald-400"
             }`}
           >
             {report?.summary.orphanFilesCount || 0}
@@ -264,7 +264,7 @@ export const MaintenanceView: React.FC = () => {
           </div>
           <div
             className={`text-base font-bold font-mono mt-1 ${
-              report?.summary.danglingPointersCount ? "text-rose-600" : "text-emerald-700"
+              report?.summary.danglingPointersCount ? "text-rose-600" : "text-emerald-700 dark:text-emerald-400"
             }`}
           >
             {report?.summary.danglingPointersCount || 0}
@@ -279,7 +279,7 @@ export const MaintenanceView: React.FC = () => {
           </div>
           <div
             className={`text-base font-bold font-mono mt-1 ${
-              report?.summary.countMismatchesCount ? "text-amber-600" : "text-emerald-700"
+              report?.summary.countMismatchesCount ? "text-amber-600" : "text-emerald-700 dark:text-emerald-400"
             }`}
           >
             {report?.summary.countMismatchesCount || 0}

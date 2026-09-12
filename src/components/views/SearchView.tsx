@@ -171,7 +171,7 @@ export const SearchView: React.FC<SearchViewProps> = ({ onNavigate }) => {
               <button
                 type="button"
                 onClick={handleClear}
-                className="p-1 rounded-md text-neutral-400 dark:text-slate-500 hover:text-neutral-600 dark:text-slate-400 hover:bg-neutral-100 dark:hover:bg-slate-800 dark:bg-slate-800 transition-colors"
+                className="p-1 rounded-md text-neutral-400 dark:text-slate-500 hover:text-neutral-600 dark:text-slate-400 hover:bg-neutral-100 dark:hover:bg-slate-800 transition-colors"
                 title="Clear query"
               >
                 <X className="w-4 h-4" />
@@ -181,7 +181,7 @@ export const SearchView: React.FC<SearchViewProps> = ({ onNavigate }) => {
               id="universal-search-submit-btn"
               type="submit"
               disabled={loading}
-              className="px-3.5 py-1.5 bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:bg-slate-200 text-white text-xs font-medium rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
+              className="px-3.5 py-1.5 bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-slate-200 text-white dark:text-slate-900 text-xs font-medium rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
             >
               {loading ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -343,7 +343,7 @@ export const SearchView: React.FC<SearchViewProps> = ({ onNavigate }) => {
                           query
                       )
                     }
-                    className="px-3.5 py-1.5 rounded-lg bg-white dark:bg-[#101728] hover:bg-neutral-100 dark:hover:bg-slate-800 dark:bg-slate-800 text-neutral-950 dark:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
+                    className="px-3.5 py-1.5 rounded-lg bg-white dark:bg-[#101728] hover:bg-neutral-100 dark:hover:bg-slate-800 text-neutral-950 dark:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
                   >
                     <Download className="w-3.5 h-3.5 text-neutral-900 dark:text-white" />
                     Inspect & Harvest Streams
@@ -357,7 +357,7 @@ export const SearchView: React.FC<SearchViewProps> = ({ onNavigate }) => {
                         );
                       }
                     }}
-                    className="px-3.5 py-1.5 rounded-lg bg-white dark:bg-[#101728] hover:bg-neutral-100 dark:hover:bg-slate-800 dark:bg-slate-800 text-neutral-950 dark:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
+                    className="px-3.5 py-1.5 rounded-lg bg-white dark:bg-[#101728] hover:bg-neutral-100 dark:hover:bg-slate-800 text-neutral-950 dark:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
                   >
                     View Catalog
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -385,7 +385,7 @@ export const SearchView: React.FC<SearchViewProps> = ({ onNavigate }) => {
               {onNavigate && (
                 <button
                   onClick={() => onNavigate("bulk-scraper")}
-                  className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-neutral-900 dark:bg-white text-white dark:text-slate-900 hover:bg-neutral-800 dark:bg-slate-200"
+                  className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-neutral-900 dark:bg-white text-white dark:text-slate-900 hover:bg-neutral-800 dark:hover:bg-slate-200"
                 >
                   Go to Scraper Pipeline
                   <ChevronRight className="w-3.5 h-3.5" />
@@ -524,7 +524,7 @@ export const SearchView: React.FC<SearchViewProps> = ({ onNavigate }) => {
                           <button
                             id={`inspect-video-btn-${item.code || item.id}`}
                             onClick={() => openHarvesterModal(item.postUrl || item.code || "")}
-                            className="w-full py-1.5 px-3 rounded-lg bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:bg-slate-200 text-white text-xs font-medium flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
+                            className="w-full py-1.5 px-3 rounded-lg bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-slate-200 text-white dark:text-slate-900 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
                           >
                             <Download className="w-3.5 h-3.5" />
                             Inspect & Harvest Streams

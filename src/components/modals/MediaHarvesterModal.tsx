@@ -145,7 +145,7 @@ export const MediaHarvesterModal: React.FC<MediaHarvesterModalProps> = ({
         className="relative w-full max-w-4xl max-h-[90vh] flex flex-col bg-white dark:bg-[#101728] rounded-xl shadow-2xl border border-neutral-200 dark:border-[#1e293b] overflow-hidden"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-[#1e293b] bg-neutral-50/80 dark:bg-[#0b101a]/80">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-[#1e293b] bg-neutral-50/80/80">
           <div className="flex items-center gap-3 min-w-0">
             <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-red-100 text-red-600 shrink-0">
               <Film className="w-4 h-4" />
@@ -242,7 +242,7 @@ export const MediaHarvesterModal: React.FC<MediaHarvesterModalProps> = ({
                 </div>
 
                 {/* Video Info List */}
-                <div className="p-3.5 bg-neutral-50 dark:bg-[#0b101a] rounded-lg border border-neutral-200 dark:border-[#1e293b] space-y-2 text-xs">
+                <div className="p-3.5 bg-neutral-50 rounded-lg border border-neutral-200 dark:border-[#1e293b] space-y-2 text-xs">
                   {data.actressName && (
                     <div className="flex items-center justify-between">
                       <span className="text-neutral-500 dark:text-slate-400 flex items-center gap-1.5">
@@ -297,7 +297,7 @@ export const MediaHarvesterModal: React.FC<MediaHarvesterModalProps> = ({
                 <div
                   className={`p-3.5 rounded-lg border flex flex-col gap-2.5 ${
                     data.inDatabase
-                      ? "bg-emerald-50/70 border-emerald-200 text-emerald-900"
+                      ? "bg-emerald-50 dark:bg-emerald-900/20/70 border-emerald-200 dark:border-emerald-800/50 text-emerald-900"
                       : "bg-amber-50/70 border-amber-200 text-amber-900"
                   }`}
                 >
@@ -369,7 +369,7 @@ export const MediaHarvesterModal: React.FC<MediaHarvesterModalProps> = ({
                   </div>
 
                   {data.playerSources.length === 0 ? (
-                    <div className="p-4 rounded-lg bg-neutral-50 dark:bg-[#0b101a] border border-dashed border-neutral-200 dark:border-[#1e293b] text-center text-xs text-neutral-500 dark:text-slate-400">
+                    <div className="p-4 rounded-lg bg-neutral-50 border border-dashed border-neutral-200 dark:border-[#1e293b] text-center text-xs text-neutral-500 dark:text-slate-400">
                       No direct MP4 streams available for this post.
                     </div>
                   ) : (
@@ -391,7 +391,7 @@ export const MediaHarvesterModal: React.FC<MediaHarvesterModalProps> = ({
                             key={idx}
                             className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
                               activeStreamUrl === source.url
-                                ? "border-emerald-500 bg-emerald-50"
+                                ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
                                 : "border-neutral-200 dark:border-[#1e293b] bg-white dark:bg-[#101728] hover:border-neutral-300 dark:hover:border-[#2b3a54] dark:border-[#2b3a54]"
                             }`}
                           >
@@ -429,7 +429,7 @@ export const MediaHarvesterModal: React.FC<MediaHarvesterModalProps> = ({
                                 className={`p-1.5 px-2.5 rounded text-white text-xs font-medium flex items-center gap-1 shadow-xs transition-colors cursor-pointer ${
                                   activeStreamUrl === source.url
                                     ? "bg-emerald-600 hover:bg-emerald-700"
-                                    : "bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:bg-slate-200"
+                                    : "bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-slate-200"
                                 }`}
                               >
                                 <Play className="w-3 h-3" />
@@ -488,13 +488,13 @@ export const MediaHarvesterModal: React.FC<MediaHarvesterModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="flex items-center justify-between px-6 py-3 border-t border-neutral-200 dark:border-[#1e293b] bg-neutral-50/50 dark:bg-[#0b101a]/50">
+        <div className="flex items-center justify-between px-6 py-3 border-t border-neutral-200 dark:border-[#1e293b] bg-neutral-50/50/50">
           <span className="text-xs text-neutral-400 dark:text-slate-500 font-mono">
             {data?.harvestedAt ? `Harvested at ${new Date(data.harvestedAt).toLocaleTimeString()}` : "Avdb Engine"}
           </span>
           <button
             onClick={onClose}
-            className="px-4 py-1.5 text-xs font-medium text-neutral-700 dark:text-slate-300 bg-white dark:bg-[#101728] border border-neutral-300 dark:border-[#2b3a54] rounded-md hover:bg-neutral-50 dark:hover:bg-[#1e293b] dark:bg-[#0b101a] active:bg-neutral-100 dark:bg-slate-800 shadow-2xs transition-colors"
+            className="px-4 py-1.5 text-xs font-medium text-neutral-700 dark:text-slate-300 bg-white dark:bg-[#101728] border border-neutral-300 dark:border-[#2b3a54] rounded-md hover:bg-neutral-50 dark:hover:bg-[#1e293b] active:bg-neutral-100 dark:bg-slate-800 shadow-2xs transition-colors"
           >
             Close Inspector
           </button>

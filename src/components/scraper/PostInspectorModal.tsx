@@ -89,7 +89,7 @@ export const PostInspectorModal: React.FC<PostInspectorModalProps> = ({
                   {video.code || "N/A"}
                 </span>
                 {video.isDuplicate ? (
-                  <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded text-xs font-medium flex items-center gap-1">
+                  <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 rounded text-xs font-medium flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" />
                     <span>In Registry</span>
                   </span>
@@ -199,7 +199,7 @@ export const PostInspectorModal: React.FC<PostInspectorModalProps> = ({
               href={video.postUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3 py-2 text-xs font-medium text-neutral-600 dark:text-slate-400 hover:text-neutral-900 dark:text-white border border-neutral-200 dark:border-[#1e293b] rounded-xl hover:bg-neutral-100 dark:hover:bg-slate-800 dark:bg-slate-800 transition-colors flex items-center gap-1.5"
+              className="px-3 py-2 text-xs font-medium text-neutral-600 dark:text-slate-400 hover:text-neutral-900 dark:text-white border border-neutral-200 dark:border-[#1e293b] rounded-xl hover:bg-neutral-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-1.5"
             >
               <ExternalLink className="w-3.5 h-3.5" />
               <span>Open on Javtiful</span>
@@ -210,7 +210,7 @@ export const PostInspectorModal: React.FC<PostInspectorModalProps> = ({
             <button
               onClick={() => onRegisterInRegistry(video)}
               disabled={isRegistering || video.isDuplicate}
-              className="px-3 py-2 text-xs font-medium text-neutral-700 dark:text-slate-300 border border-neutral-200 dark:border-[#1e293b] rounded-xl hover:bg-neutral-100 dark:hover:bg-slate-800 dark:bg-slate-800 transition-colors flex items-center gap-1.5 disabled:opacity-50"
+              className="px-3 py-2 text-xs font-medium text-neutral-700 dark:text-slate-300 border border-neutral-200 dark:border-[#1e293b] rounded-xl hover:bg-neutral-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-1.5 disabled:opacity-50"
             >
               <Layers className="w-3.5 h-3.5 text-neutral-500 dark:text-slate-400" />
               <span>{isRegistering ? "Registering..." : "Register Code Only"}</span>
@@ -221,8 +221,8 @@ export const PostInspectorModal: React.FC<PostInspectorModalProps> = ({
               onClick={() => onIngest(video)}
               className={`px-4 py-2 text-xs font-medium rounded-xl transition-all flex items-center gap-1.5 ${
                 video.isDuplicate
-                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default"
-                  : "bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:bg-slate-200 text-white shadow-xs"
+                  ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 cursor-default"
+                  : "bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-slate-200 text-white dark:text-slate-900 shadow-xs"
               }`}
             >
               {isIngesting ? (

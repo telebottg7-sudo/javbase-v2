@@ -103,7 +103,7 @@ export const SystemTestsView: React.FC = () => {
             <button
               onClick={runIngestionTestSuite}
               disabled={ingestionTestRunning}
-              className="px-4 py-2 rounded-lg bg-neutral-900 dark:bg-white text-white dark:text-slate-900 text-xs font-medium hover:bg-neutral-800 dark:bg-slate-200 disabled:opacity-50 flex items-center gap-2 shrink-0 transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-lg bg-neutral-900 dark:bg-white text-white dark:text-slate-900 text-xs font-medium hover:bg-neutral-800 dark:hover:bg-slate-200 disabled:opacity-50 flex items-center gap-2 shrink-0 transition-colors cursor-pointer"
             >
               {ingestionTestRunning ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -117,7 +117,7 @@ export const SystemTestsView: React.FC = () => {
             <div className="mt-4 pt-4 border-t border-neutral-100 space-y-3">
               <div className="flex items-center gap-2 mb-2">
                 {ingestionTestReport.success ? (
-                  <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/50">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                     All Ingestion Tests Passed
                   </span>
@@ -137,7 +137,7 @@ export const SystemTestsView: React.FC = () => {
                     key={idx}
                     className={`p-3 rounded-lg border text-xs flex items-center justify-between ${
                       step.status === "passed"
-                        ? "bg-emerald-50/50 border-emerald-100 text-emerald-900"
+                        ? "bg-emerald-50 dark:bg-emerald-900/20/50 border-emerald-100 text-emerald-900"
                         : "bg-rose-50 border-rose-200 text-rose-900"
                     }`}
                   >
@@ -170,7 +170,7 @@ export const SystemTestsView: React.FC = () => {
             <button
               onClick={runStep7TestSuite}
               disabled={step7TestRunning}
-              className="px-4 py-2 rounded-lg bg-neutral-900 dark:bg-white text-white dark:text-slate-900 text-xs font-medium hover:bg-neutral-800 dark:bg-slate-200 disabled:opacity-50 flex items-center gap-2 shrink-0 transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-lg bg-neutral-900 dark:bg-white text-white dark:text-slate-900 text-xs font-medium hover:bg-neutral-800 dark:hover:bg-slate-200 disabled:opacity-50 flex items-center gap-2 shrink-0 transition-colors cursor-pointer"
             >
               {step7TestRunning ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -184,7 +184,7 @@ export const SystemTestsView: React.FC = () => {
             <div className="mt-4 pt-4 border-t border-neutral-100 space-y-3">
               <div className="flex items-center gap-2 mb-2">
                 {step7TestReport.success ? (
-                  <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/50">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                     All Scraper Tests Passed
                   </span>
@@ -204,7 +204,7 @@ export const SystemTestsView: React.FC = () => {
                     key={idx}
                     className={`p-3 rounded-lg border text-xs flex items-center justify-between ${
                       step.status === "passed"
-                        ? "bg-emerald-50/50 border-emerald-100 text-emerald-900"
+                        ? "bg-emerald-50 dark:bg-emerald-900/20/50 border-emerald-100 text-emerald-900"
                         : "bg-rose-50 border-rose-200 text-rose-900"
                     }`}
                   >
@@ -237,7 +237,7 @@ export const SystemTestsView: React.FC = () => {
             <button
               onClick={runStep8TestSuite}
               disabled={step8TestRunning}
-              className="px-4 py-2 rounded-lg bg-neutral-900 dark:bg-white text-white dark:text-slate-900 text-xs font-medium hover:bg-neutral-800 dark:bg-slate-200 disabled:opacity-50 flex items-center gap-2 shrink-0 transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-lg bg-neutral-900 dark:bg-white text-white dark:text-slate-900 text-xs font-medium hover:bg-neutral-800 dark:hover:bg-slate-200 disabled:opacity-50 flex items-center gap-2 shrink-0 transition-colors cursor-pointer"
             >
               {step8TestRunning ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -251,7 +251,7 @@ export const SystemTestsView: React.FC = () => {
             <div className="mt-4 pt-4 border-t border-neutral-100 space-y-3">
               <div className="flex items-center gap-2 mb-2">
                 {step8TestReport.success ? (
-                  <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/50">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                     All Search Tests Passed
                   </span>
@@ -271,7 +271,7 @@ export const SystemTestsView: React.FC = () => {
                     key={idx}
                     className={`p-3 rounded-lg border text-xs flex items-center justify-between ${
                       step.status === "passed"
-                        ? "bg-emerald-50/50 border-emerald-100 text-emerald-900"
+                        ? "bg-emerald-50 dark:bg-emerald-900/20/50 border-emerald-100 text-emerald-900"
                         : "bg-rose-50 border-rose-200 text-rose-900"
                     }`}
                   >
@@ -304,7 +304,7 @@ export const SystemTestsView: React.FC = () => {
             <button
               onClick={runStep11TestSuite}
               disabled={step11TestRunning}
-              className="px-4 py-2 rounded-lg bg-neutral-900 dark:bg-white text-white dark:text-slate-900 text-xs font-medium hover:bg-neutral-800 dark:bg-slate-200 disabled:opacity-50 flex items-center gap-2 shrink-0 transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-lg bg-neutral-900 dark:bg-white text-white dark:text-slate-900 text-xs font-medium hover:bg-neutral-800 dark:hover:bg-slate-200 disabled:opacity-50 flex items-center gap-2 shrink-0 transition-colors cursor-pointer"
             >
               {step11TestRunning ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -318,7 +318,7 @@ export const SystemTestsView: React.FC = () => {
             <div className="mt-4 pt-4 border-t border-neutral-100 space-y-3">
               <div className="flex items-center gap-2 mb-2">
                 {step11TestReport.success ? (
-                  <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/50">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                     All Maintenance Tests Passed
                   </span>
@@ -338,7 +338,7 @@ export const SystemTestsView: React.FC = () => {
                     key={idx}
                     className={`p-3 rounded-lg border text-xs flex items-center justify-between ${
                       step.status === "passed"
-                        ? "bg-emerald-50/50 border-emerald-100 text-emerald-900"
+                        ? "bg-emerald-50 dark:bg-emerald-900/20/50 border-emerald-100 text-emerald-900"
                         : "bg-rose-50 border-rose-200 text-rose-900"
                     }`}
                   >

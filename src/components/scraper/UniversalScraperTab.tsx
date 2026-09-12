@@ -84,7 +84,7 @@ export const UniversalScraperTab: React.FC<UniversalScraperTabProps> = ({
               id="btn-execute-bulk-scrape"
               type="submit"
               disabled={bulkScraping || !bulkUrl.trim()}
-              className="px-5 py-2.5 bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:bg-slate-200 disabled:opacity-50 text-white rounded-xl text-xs font-medium transition-all shadow-xs flex items-center gap-2 shrink-0"
+              className="px-5 py-2.5 bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-slate-200 disabled:opacity-50 text-white dark:text-slate-900 rounded-xl text-xs font-medium transition-all shadow-xs flex items-center gap-2 shrink-0"
             >
               {bulkScraping ? (
                 <>
@@ -164,7 +164,7 @@ export const UniversalScraperTab: React.FC<UniversalScraperTabProps> = ({
       {commitReceipt && (
         <div
           id="bulk-commit-receipt"
-          className="p-5 bg-emerald-50/70 border border-emerald-200 rounded-2xl space-y-3"
+          className="p-5 bg-emerald-50 dark:bg-emerald-900/20/70 border border-emerald-200 dark:border-emerald-800/50 rounded-2xl space-y-3"
         >
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-2.5">
@@ -194,14 +194,14 @@ export const UniversalScraperTab: React.FC<UniversalScraperTabProps> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono pt-1">
-            <div className="p-2.5 bg-white/80 dark:bg-[#101728]/80 rounded-lg border border-emerald-200/60">
-              <span className="text-emerald-700 block text-[10px] uppercase font-sans font-semibold">
+            <div className="p-2.5 bg-white/80 dark:bg-[#101728]/80 rounded-lg border border-emerald-200 dark:border-emerald-800/50/60">
+              <span className="text-emerald-700 dark:text-emerald-400 block text-[10px] uppercase font-sans font-semibold">
                 Commit SHA
               </span>
               <span className="text-neutral-900 dark:text-white">{commitReceipt.commitSha}</span>
             </div>
-            <div className="p-2.5 bg-white/80 dark:bg-[#101728]/80 rounded-lg border border-emerald-200/60">
-              <span className="text-emerald-700 block text-[10px] uppercase font-sans font-semibold">
+            <div className="p-2.5 bg-white/80 dark:bg-[#101728]/80 rounded-lg border border-emerald-200 dark:border-emerald-800/50/60">
+              <span className="text-emerald-700 dark:text-emerald-400 block text-[10px] uppercase font-sans font-semibold">
                 Modified Files
               </span>
               <span className="text-neutral-900 dark:text-white">{commitReceipt.modifiedFiles.length} file updates</span>
@@ -222,7 +222,7 @@ export const UniversalScraperTab: React.FC<UniversalScraperTabProps> = ({
                 <span>items found</span>
               </div>
               <div className="h-3 w-px bg-neutral-200 dark:bg-slate-700" />
-              <div className="flex items-center gap-1.5 text-emerald-700 font-medium">
+              <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-medium">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                 <span>{bulkScrapeResult.uniqueCount} new</span>
               </div>
@@ -237,7 +237,7 @@ export const UniversalScraperTab: React.FC<UniversalScraperTabProps> = ({
                 id="btn-bulk-commit-all"
                 disabled={bulkScrapeResult.uniqueCount === 0 || bulkBatchCommitting}
                 onClick={onCommitAll}
-                className="px-4 py-2 bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:bg-slate-200 disabled:opacity-40 text-white rounded-xl text-xs font-medium transition-all shadow-xs flex items-center gap-2"
+                className="px-4 py-2 bg-neutral-900 dark:bg-white hover:bg-neutral-800 dark:hover:bg-slate-200 disabled:opacity-40 text-white dark:text-slate-900 rounded-xl text-xs font-medium transition-all shadow-xs flex items-center gap-2"
               >
                 {bulkBatchCommitting ? (
                   <>
