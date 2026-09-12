@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   X,
   Play,
@@ -40,11 +40,17 @@ export const MediaHarvesterModal: React.FC<MediaHarvesterModalProps> = ({
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const [ingesting, setIngesting] = useState<boolean>(false);
   const [ingestSuccess, setIngestSuccess] = useState<boolean>(false);
+  const [selectedSourceUrl, setSelectedSourceUrl] = useState<string | null>(null);
+  const [playerLoading, setPlayerLoading] = useState<boolean>(false);
+  const [playerError, setPlayerError] = useState<string | null>(null);
+  const [playerAttempt, setPlayerAttempt] = useState(0);
 
   useEffect(() => {
     if (!isOpen || !postUrlOrCode) {
       setData(null);
       setError(null);
+      setSelectedSourceUrl(null);
+      setPlayerError(null);
       return;
     }
 
@@ -64,6 +70,8 @@ export const MediaHarvesterModal: React.FC<MediaHarvesterModalProps> = ({
       .then((details: HarvestedMediaDetails) => {
         if (isMounted) {
           setData(details);
+          setSelectedSourceUrl(details.playerSources[0]?.url || null);
+          setPlayerError(null);
           setLoading(false);
         }
       })
@@ -78,6 +86,14 @@ export const MediaHarvesterModal: React.FC<MediaHarvesterModalProps> = ({
       isMounted = false;
     };
   }, [isOpen, postUrlOrCode]);
+
+  const selectedSource = useMemo(
+    () => data?.playerSources.find((source) => source.url === selectedSourceUrl) || data?.playerSources[0],
+    [data, selectedSourceUrl]
+  );
+  const playbackUrl = selectedSource
+    ? `/api/media/stream?url=${encodeURIComponent(selectedSource.url)}&attempt=${playerAttempt}`
+    : undefined;
 
   if (!isOpen) return null;
 
@@ -354,6 +370,49 @@ export const MediaHarvesterModal: React.FC<MediaHarvesterModalProps> = ({
 
               {/* Right Column: Streams, Downloads, Tags */}
               <div className="md:col-span-7 space-y-5">
+                {/* Main stream player: the backend proxy supplies required referrer headers and Range support. */}
+                {selectedSource && (
+                  <div>
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 flex items-center gap-1.5">
+                        <Play className="w-3.5 h-3.5 text-neutral-700" />
+                        Main Video Stream
+                      </h4>
+                      {data.playerSources.length > 1 && (
+                        <select
+                          value={selectedSource.url}
+                          onChange={(event) => { setSelectedSourceUrl(event.target.value); setPlayerError(null); setPlayerLoading(true); }}
+                          className="max-w-40 rounded border border-neutral-300 bg-white px-2 py-1 text-xs text-neutral-700"
+                          aria-label="Select stream quality"
+                        >
+                          {data.playerSources.map((source) => <option key={source.url} value={source.url}>{source.label || `${source.quality}p`} ({source.format})</option>)}
+                        </select>
+                      )}
+                    </div>
+                    <div className="relative rounded-lg overflow-hidden bg-black aspect-16/9 border border-neutral-200">
+                      {playerLoading && !playerError && <div className="absolute inset-0 z-10 flex items-center justify-center gap-2 bg-black/50 text-xs text-white"><Loader2 className="w-4 h-4 animate-spin" /> Loading stream…</div>}
+                      {playerError ? (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center text-white">
+                          <AlertCircle className="w-6 h-6 text-red-400" />
+                          <p className="text-xs">{playerError}</p>
+                          <button onClick={() => { setPlayerError(null); setPlayerLoading(true); setPlayerAttempt((attempt) => attempt + 1); }} className="rounded bg-white px-3 py-1.5 text-xs font-medium text-neutral-900">Retry playback</button>
+                        </div>
+                      ) : (
+                        <video
+                          key={playbackUrl}
+                          src={playbackUrl}
+                          controls
+                          playsInline
+                          preload="metadata"
+                          className="w-full h-full object-contain"
+                          onLoadStart={() => setPlayerLoading(true)}
+                          onCanPlay={() => setPlayerLoading(false)}
+                          onError={() => { setPlayerLoading(false); setPlayerError("The selected stream could not be played. Please retry or choose another quality."); }}
+                        />
+                      )}
+                    </div>
+                  </div>
+                )}
                 {/* Direct Video Streams & Download Options */}
                 <div>
                   <div className="flex items-center justify-between mb-2.5">
@@ -392,6 +451,11 @@ export const MediaHarvesterModal: React.FC<MediaHarvesterModalProps> = ({
                           </div>
 
                           <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              onClick={() => { setSelectedSourceUrl(source.url); setPlayerError(null); setPlayerLoading(true); }}
+                              className="p-1.5 px-2.5 rounded bg-red-600 hover:bg-red-700 text-white text-xs font-medium flex items-center gap-1 shadow-xs transition-colors"
+                              title="Play this stream"
+                            ><Play className="w-3 h-3 fill-current" /><span className="text-[11px]">Play</span></button>
                             <button
                               id={`copy-stream-btn-${idx}`}
                               onClick={() => handleCopy(source.url, `stream-${idx}`)}
