@@ -290,13 +290,13 @@ export const HomeView: React.FC<HomeViewProps> = ({ status, onNavigate }) => {
   ];
 
   const quickLinks: Array<{ id: NavView; label: string; icon: React.ElementType; desc: string; badge?: string }> = [
-    { id: "bulk-scraper", label: "Bulk Scraper", icon: Layers, desc: "Batch ingestion pipeline for Javtiful videos, actresses & channels", badge: "Ingestion" },
-    { id: "search", label: "Search Engine", icon: Search, desc: "Sub-millisecond query across code, actress, studio & release title", badge: "Live Query" },
-    { id: "code", label: "Code Registry", icon: Hash, desc: "Normalized code de-duplication registry & prefix analytics", badge: `${schemaReport?.files?.codes?.totalCount ?? 62} Codes` },
-    { id: "videos", label: "Video Catalog", icon: Film, desc: "Browse full video database with rich tags, performers & studio info", badge: `${schemaReport?.files?.videos?.totalCount ?? 60} Releases` },
-    { id: "actress", label: "Actress Catalog", icon: Users, desc: "Explore sharded actress profiles in database/pstar/", badge: `${schemaReport?.files?.actresses?.totalCount ?? 34} Profiles` },
-    { id: "studio", label: "Studio Catalog", icon: Building2, desc: "Explore studio directory and production releases in database/studio/", badge: `${schemaReport?.files?.studios?.totalCount ?? 22} Studios` },
-    { id: "maintenance", label: "Maintenance Tools", icon: Wrench, desc: "Deep validation, duplicate/orphan detection, index repairs & rebuilds", badge: "Health Audit" },
+    { id: "bulk-scraper", label: "Bulk Scraper", icon: Layers, desc: "Batch ingestion & metadata extraction", badge: "Ingestion" },
+    { id: "search", label: "Search Engine", icon: Search, desc: "Search videos, actresses, studios & codes", badge: "Live Query" },
+    { id: "code", label: "Code Registry", icon: Hash, desc: "Normalized code index & category browser", badge: `${schemaReport?.files?.codes?.totalCount ?? 62} Codes` },
+    { id: "videos", label: "Video Catalog", icon: Film, desc: "Video database & release metadata", badge: `${schemaReport?.files?.videos?.totalCount ?? 60} Releases` },
+    { id: "actress", label: "Actress Catalog", icon: Users, desc: "Actress profiles & sharded catalogs", badge: `${schemaReport?.files?.actresses?.totalCount ?? 34} Profiles` },
+    { id: "studio", label: "Studio Catalog", icon: Building2, desc: "Studio directory & production lists", badge: `${schemaReport?.files?.studios?.totalCount ?? 22} Studios` },
+    { id: "maintenance", label: "Maintenance Tools", icon: Wrench, desc: "Validation, duplicate checks & index repairs", badge: "Health Audit" },
   ];
 
   return (
@@ -480,30 +480,24 @@ export const HomeView: React.FC<HomeViewProps> = ({ status, onNavigate }) => {
                 <HardDrive className="w-4 h-4 text-neutral-700" />
                 <h3 className="text-sm font-bold text-neutral-900">GitHub Storage Verification Suite</h3>
               </div>
-              <span className="text-[10px] font-mono text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded">
-                Step 2 Suite
-              </span>
             </div>
-            <p className="text-xs text-neutral-500 mt-2">
-              Validates read, write, existence-check, atomic multi-file commit, and cleanup against repository storage.
-            </p>
           </div>
 
           <div>
             <button
               onClick={runStorageSelfTest}
               disabled={isRunningTest}
-              className="w-full py-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 active:bg-neutral-950 text-white text-xs font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60 shadow-xs"
+              className="w-full py-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 active:bg-neutral-950 text-white text-xs font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60 shadow-xs cursor-pointer"
             >
               {isRunningTest ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Running Storage Diagnostics...</span>
+                  <span>Running Diagnostics...</span>
                 </>
               ) : (
                 <>
                   <Play className="w-3.5 h-3.5 fill-current" />
-                  <span>Run Storage Self-Test</span>
+                  <span>Run Storage Diagnostics</span>
                 </>
               )}
             </button>
@@ -539,33 +533,30 @@ export const HomeView: React.FC<HomeViewProps> = ({ status, onNavigate }) => {
           </div>
         </div>
 
-        {/* Step 10 Concurrency & Performance Suite */}
+        {/* Concurrency & Performance Suite */}
         <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 shadow-xs space-y-4 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
               <div className="flex items-center gap-2">
                 <Zap className="w-4 h-4 text-amber-600" />
-                <h3 className="text-sm font-bold text-neutral-900">Step 10 Concurrency & Benchmark</h3>
+                <h3 className="text-sm font-bold text-neutral-900">Concurrency & Benchmark Suite</h3>
               </div>
               <button
                 onClick={handlePurgeCache}
                 disabled={isPurgingCache}
-                className="text-[11px] text-neutral-600 hover:text-neutral-900 font-semibold flex items-center gap-1 underline"
+                className="text-[11px] text-neutral-600 hover:text-neutral-900 font-semibold flex items-center gap-1 underline cursor-pointer"
               >
                 <Trash2 className="w-3 h-3" />
                 <span>Purge Cache</span>
               </button>
             </div>
-            <p className="text-xs text-neutral-500 mt-2">
-              Runs concurrent load tests, race-condition safety checks, and in-memory cache speed benchmarks.
-            </p>
           </div>
 
           <div>
             <button
               onClick={runStep10PerformanceSuite}
               disabled={isRunningPerfTest}
-              className="w-full py-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 active:bg-neutral-950 text-white text-xs font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60 shadow-xs"
+              className="w-full py-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 active:bg-neutral-950 text-white text-xs font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60 shadow-xs cursor-pointer"
             >
               {isRunningPerfTest ? (
                 <>
@@ -575,7 +566,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ status, onNavigate }) => {
               ) : (
                 <>
                   <Play className="w-3.5 h-3.5 fill-current" />
-                  <span>Run Step 10 Concurrency Suite</span>
+                  <span>Run Concurrency Benchmark</span>
                 </>
               )}
             </button>
@@ -618,9 +609,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ status, onNavigate }) => {
           <h3 className="text-sm font-bold text-neutral-900 uppercase tracking-wide">
             Application Modules & Catalogs
           </h3>
-          <p className="text-xs text-neutral-500 mt-0.5">
-            Direct access to ingestion pipelines, code indexes, performers, and maintenance tools
-          </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">

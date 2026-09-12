@@ -88,40 +88,29 @@ export const SystemTestsView: React.FC = () => {
           <Bug className="w-6 h-6 text-neutral-500" />
           System Test Suites
         </h1>
-        <p className="text-sm text-neutral-500 mt-2">
-          Automated verification suites to test the core systems of the application, including scraping, deduplication, search logic, and index maintenance.
-        </p>
       </div>
 
       <div className="space-y-6">
         
-        {/* Step 6 Test Suite */}
+        {/* Ingestion Test Suite */}
         <div className="bg-white rounded-xl border border-neutral-200 p-5 shadow-xs">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 text-[10px] font-bold tracking-wider">
-                  STEP 6
-                </span>
-                <h2 className="text-sm font-semibold text-neutral-900">
-                  Database Ingestion & Sharding Suite
-                </h2>
-              </div>
-              <p className="text-xs text-neutral-500 mt-1 max-w-2xl">
-                Tests batch ingestion, global deterministic deduplication, sharded profile creation, and atomic tree updates.
-              </p>
+              <h2 className="text-sm font-semibold text-neutral-900">
+                Database Ingestion & Sharding Suite
+              </h2>
             </div>
             <button
               onClick={runIngestionTestSuite}
               disabled={ingestionTestRunning}
-              className="px-4 py-2 rounded-lg bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 disabled:opacity-50 flex items-center gap-2 shrink-0 transition-colors"
+              className="px-4 py-2 rounded-lg bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 disabled:opacity-50 flex items-center gap-2 shrink-0 transition-colors cursor-pointer"
             >
               {ingestionTestRunning ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
                 <Play className="w-3.5 h-3.5 fill-current" />
               )}
-              {ingestionTestRunning ? "Running..." : "Run Step 6 Suite"}
+              {ingestionTestRunning ? "Running..." : "Run Ingestion Suite"}
             </button>
           </div>
           {ingestionTestReport && (
@@ -170,33 +159,25 @@ export const SystemTestsView: React.FC = () => {
           )}
         </div>
 
-        {/* Step 7 Test Suite */}
+        {/* Scraper Test Suite */}
         <div className="bg-white rounded-xl border border-neutral-200 p-5 shadow-xs">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 text-[10px] font-bold tracking-wider">
-                  STEP 7
-                </span>
-                <h2 className="text-sm font-semibold text-neutral-900">
-                  Bulk Scraper & Single-Commit Suite
-                </h2>
-              </div>
-              <p className="text-xs text-neutral-500 mt-1 max-w-2xl">
-                Validates universal scraping, parallel details enrichment, and strict 1-commit constraint for bulk ingestion.
-              </p>
+              <h2 className="text-sm font-semibold text-neutral-900">
+                Bulk Scraper & Commit Pipeline Suite
+              </h2>
             </div>
             <button
               onClick={runStep7TestSuite}
               disabled={step7TestRunning}
-              className="px-4 py-2 rounded-lg bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 disabled:opacity-50 flex items-center gap-2 shrink-0 transition-colors"
+              className="px-4 py-2 rounded-lg bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 disabled:opacity-50 flex items-center gap-2 shrink-0 transition-colors cursor-pointer"
             >
               {step7TestRunning ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
                 <Play className="w-3.5 h-3.5 fill-current" />
               )}
-              {step7TestRunning ? "Running..." : "Run Step 7 Suite"}
+              {step7TestRunning ? "Running..." : "Run Scraper Suite"}
             </button>
           </div>
           {step7TestReport && (
@@ -205,12 +186,12 @@ export const SystemTestsView: React.FC = () => {
                 {step7TestReport.success ? (
                   <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    All Step 7 Tests Passed
+                    All Scraper Tests Passed
                   </span>
                 ) : (
                   <span className="flex items-center gap-1.5 text-xs font-semibold text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-200">
                     <XCircle className="w-4 h-4 text-rose-600" />
-                    Step 7 Tests Failed
+                    Scraper Tests Failed
                   </span>
                 )}
                 <span className="text-xs text-neutral-500 font-mono bg-neutral-100 px-2 py-1 rounded-md">
@@ -245,33 +226,25 @@ export const SystemTestsView: React.FC = () => {
           )}
         </div>
 
-        {/* Step 8 Test Suite */}
+        {/* Search Test Suite */}
         <div className="bg-white rounded-xl border border-neutral-200 p-5 shadow-xs">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-bold tracking-wider">
-                  STEP 8
-                </span>
-                <h2 className="text-sm font-semibold text-neutral-900">
-                  Media Stream & Search Test Suite
-                </h2>
-              </div>
-              <p className="text-xs text-neutral-500 mt-1 max-w-2xl">
-                Tests video extraction, high-performance in-memory search, relevance scoring, and exact-match navigation.
-              </p>
+              <h2 className="text-sm font-semibold text-neutral-900">
+                Media Stream & Search Test Suite
+              </h2>
             </div>
             <button
               onClick={runStep8TestSuite}
               disabled={step8TestRunning}
-              className="px-4 py-2 rounded-lg bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 disabled:opacity-50 flex items-center gap-2 shrink-0 transition-colors"
+              className="px-4 py-2 rounded-lg bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 disabled:opacity-50 flex items-center gap-2 shrink-0 transition-colors cursor-pointer"
             >
               {step8TestRunning ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
                 <Play className="w-3.5 h-3.5 fill-current" />
               )}
-              {step8TestRunning ? "Running..." : "Run Step 8 Suite"}
+              {step8TestRunning ? "Running..." : "Run Search Suite"}
             </button>
           </div>
           {step8TestReport && (
@@ -320,33 +293,25 @@ export const SystemTestsView: React.FC = () => {
           )}
         </div>
 
-        {/* Step 11 Test Suite */}
+        {/* Maintenance Test Suite */}
         <div className="bg-white rounded-xl border border-neutral-200 p-5 shadow-xs">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded-md bg-teal-100 text-teal-800 text-[10px] font-bold tracking-wider">
-                  STEP 11
-                </span>
-                <h2 className="text-sm font-semibold text-neutral-900">
-                  Maintenance & Self-Healing Suite
-                </h2>
-              </div>
-              <p className="text-xs text-neutral-500 mt-1 max-w-2xl">
-                Validates data integrity checks, orphan code cleanup, dangling pointer resolution, and tree structure healing.
-              </p>
+              <h2 className="text-sm font-semibold text-neutral-900">
+                Maintenance & Self-Healing Suite
+              </h2>
             </div>
             <button
               onClick={runStep11TestSuite}
               disabled={step11TestRunning}
-              className="px-4 py-2 rounded-lg bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 disabled:opacity-50 flex items-center gap-2 shrink-0 transition-colors"
+              className="px-4 py-2 rounded-lg bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-800 disabled:opacity-50 flex items-center gap-2 shrink-0 transition-colors cursor-pointer"
             >
               {step11TestRunning ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
                 <Play className="w-3.5 h-3.5 fill-current" />
               )}
-              {step11TestRunning ? "Running..." : "Run Step 11 Suite"}
+              {step11TestRunning ? "Running..." : "Run Maintenance Suite"}
             </button>
           </div>
           {step11TestReport && (

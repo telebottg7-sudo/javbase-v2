@@ -107,16 +107,10 @@ export const MaintenanceView: React.FC = () => {
           <div className="flex items-center gap-2 text-xs font-mono font-semibold text-neutral-500 uppercase tracking-wide">
             <Wrench className="w-3.5 h-3.5 text-neutral-700" />
             <span>Database Integrity & Maintenance</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            <span className="text-emerald-700">Step 11 Active</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 mt-1">
-            Validation & Maintenance Tools
+            Validation & Maintenance
           </h1>
-          <p className="text-xs sm:text-sm text-neutral-600 mt-1 max-w-2xl leading-relaxed">
-            Verify database and index integrity, detect duplicate codes, eliminate orphan files,
-            validate JSON schemas, and execute atomic index rebuilds.
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">

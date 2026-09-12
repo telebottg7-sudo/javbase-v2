@@ -62,11 +62,8 @@ export const UniversalScraperTab: React.FC<UniversalScraperTabProps> = ({
     <div className="space-y-6">
       {/* Search / Target URL Input */}
       <div className="p-5 bg-white border border-neutral-200 rounded-2xl shadow-xs space-y-4">
-        <div className="space-y-1">
+        <div>
           <h3 className="text-sm font-semibold text-neutral-900">Universal Bulk Scraper</h3>
-          <p className="text-xs text-neutral-500">
-            Extract videos from any Javtiful page (Main, Actresses, Studios, Tags, Categories, or Search queries) and commit in a single atomic batch transaction.
-          </p>
         </div>
 
         <form onSubmit={onScrape} className="space-y-3">

@@ -60,13 +60,10 @@ export const CatalogScraperTab: React.FC<CatalogScraperTabProps> = ({
       {/* Controls Bar */}
       <div className="p-5 bg-white border border-neutral-200 rounded-2xl shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
+          <div>
             <h3 className="text-sm font-semibold text-neutral-900">
               Live Javtiful Catalog Scraper
             </h3>
-            <p className="text-xs text-neutral-500">
-              Scrape and enrich releases directly from the primary catalog pagination.
-            </p>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">

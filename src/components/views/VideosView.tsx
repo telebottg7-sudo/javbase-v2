@@ -101,15 +101,7 @@ export const VideosView: React.FC<VideosViewProps> = ({ onNavigate }) => {
       <div className="bg-white border border-neutral-200 rounded-xl p-5 sm:p-6 shadow-xs space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-blue-100 text-blue-800 border border-blue-200">
-                STEP 6
-              </span>
-              <h1 className="text-lg font-semibold text-neutral-900">Master Video Catalog</h1>
-            </div>
-            <p className="text-xs text-neutral-500 mt-1">
-              Synchronized global video index at <code className="font-mono bg-neutral-100 px-1 py-0.5 rounded text-neutral-800">database/index/videos.json</code> with deduplication & sharded links.
-            </p>
+            <h1 className="text-lg font-semibold text-neutral-900">Master Video Catalog</h1>
           </div>
 
           <div className="flex items-center gap-2">

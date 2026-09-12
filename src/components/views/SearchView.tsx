@@ -137,19 +137,13 @@ export const SearchView: React.FC<SearchViewProps> = ({ onNavigate }) => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-neutral-200">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-neutral-900 text-white tracking-wide">
-              Step 8
-            </span>
             <span className="text-xs font-semibold tracking-wider text-neutral-500 uppercase">
               Universal Discovery Engine
             </span>
           </div>
           <h1 className="text-2xl font-bold text-neutral-900 mt-1">
-            Universal Metadata Search & Deep Harvester
+            Metadata Search
           </h1>
-          <p className="text-sm text-neutral-600 mt-1">
-            Unified cross-entity querying across canonical codes, video records, actresses, and studios.
-          </p>
         </div>
 
         <div className="flex items-center gap-3">

@@ -63,13 +63,10 @@ export const SearchScraperTab: React.FC<SearchScraperTabProps> = ({
       {/* Search Input Box */}
       <div className="p-5 bg-white border border-neutral-200 rounded-2xl shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="space-y-1">
+          <div>
             <h3 className="text-sm font-semibold text-neutral-900 flex items-center gap-2">
               <span>Search Javtiful Releases</span>
             </h3>
-            <p className="text-xs text-neutral-500">
-              Query by release code (e.g. RKI, SSIS, DASS), actress name, or genre keyword.
-            </p>
           </div>
 
           {/* Auto-Commit Setting Status Badge */}
