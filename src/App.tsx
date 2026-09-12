@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { NavView, NavParams, BackendStatus } from "./types";
 import { Sidebar } from "./components/layout/Sidebar";
 import { Header } from "./components/layout/Header";
-import { HomeView } from "./components/views/HomeView";
+import { PremiumHomeView } from "./components/views/PremiumHomeView";
 import { SearchView } from "./components/views/SearchView";
 import { BulkScraperView } from "./components/views/BulkScraperView";
 import { ActressView } from "./components/views/ActressView";
@@ -29,18 +29,14 @@ export default function App() {
   useEffect(() => {
     fetch("/api/config/status")
       .then((res) => res.json())
-      .then((data: BackendStatus) => {
-        setStatus(data);
-      })
-      .catch((err) => {
-        console.error("Failed to fetch backend status:", err);
-      });
+      .then((data: BackendStatus) => setStatus(data))
+      .catch((err) => console.error("Failed to fetch backend status:", err));
   }, []);
 
   const renderView = () => {
     switch (currentView) {
       case "home":
-        return <HomeView status={status} onNavigate={handleNavigate} />;
+        return <PremiumHomeView onNavigate={handleNavigate} />;
       case "search":
         return <SearchView onNavigate={handleNavigate} />;
       case "bulk-scraper":
@@ -58,13 +54,12 @@ export default function App() {
       case "system-tests":
         return <SystemTestsView />;
       default:
-        return <HomeView status={status} onNavigate={handleNavigate} />;
+        return <PremiumHomeView onNavigate={handleNavigate} />;
     }
   };
 
   return (
     <div className="flex h-screen w-screen bg-neutral-50 text-neutral-900 overflow-hidden font-sans">
-      {/* Collapsible & Mobile Responsive Left Sidebar */}
       <Sidebar
         currentView={currentView}
         onNavigate={handleNavigate}
@@ -75,7 +70,6 @@ export default function App() {
         onCloseMobile={() => setMobileOpen(false)}
       />
 
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         <Header
           currentView={currentView}
