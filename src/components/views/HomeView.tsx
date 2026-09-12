@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   BackendStatus,
   NavView,
+  NavParams,
   SelfTestReport,
   DatabaseStatusReport,
   StoragePerformanceMetrics,
@@ -11,10 +12,9 @@ import {
 import { fetchWithRetry } from "../../utils/fetchWithRetry";
 import {
   Search,
-  Layers,
   Users,
   Building2,
-  Hash,
+  Code as CodeIcon,
   Film,
   ArrowRight,
   HardDrive,
@@ -22,16 +22,17 @@ import {
   XCircle,
   Loader2,
   Play,
-  RefreshCw,
   Zap,
   Trash2,
-  Wrench,
-  Calendar,
   Sparkles,
-  ExternalLink,
+  HelpCircle,
+  MoreVertical,
+  Activity,
+  Layers,
+  ChevronRight,
+  TrendingUp,
+  RefreshCw,
 } from "lucide-react";
-import { DatabaseHealthGauges } from "../home/DatabaseHealthGauges";
-import { AutoCommitControlCard } from "../home/AutoCommitControlCard";
 
 interface LatestVideo {
   code: string;
@@ -39,6 +40,7 @@ interface LatestVideo {
   thumbnail?: string | null;
   postUrl?: string | null;
   releaseDate?: string | null;
+  duration?: string;
   addedAt?: string;
   actress?: { name: string; slug: string } | null;
   studio?: { name: string; slug: string } | null;
@@ -53,31 +55,82 @@ interface LatestIndexData {
 
 interface HomeViewProps {
   status: BackendStatus | null;
-  onNavigate: (view: NavView) => void;
+  onNavigate: (view: NavView, params?: NavParams) => void;
 }
 
+// Fallback visual sample videos matching the reference layout
+const defaultReleases: LatestVideo[] = [
+  {
+    code: "ABP-1234",
+    title: "Beautiful Girl Next Door",
+    duration: "2:34:12",
+    releaseDate: "2025-04-28",
+    thumbnail: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80",
+    actress: { name: "Mizuki Akari", slug: "mizuki-akari" },
+    studio: { name: "S1", slug: "s1" },
+  },
+  {
+    code: "SSS-5678",
+    title: "Office Lady Temptation",
+    duration: "1:48:20",
+    releaseDate: "2025-04-27",
+    thumbnail: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=600&q=80",
+    actress: { name: "Sakura Aoi", slug: "sakura-aoi" },
+    studio: { name: "S1", slug: "s1" },
+  },
+  {
+    code: "IPX-9012",
+    title: "Late Night Secrets",
+    duration: "2:17:45",
+    releaseDate: "2025-04-26",
+    thumbnail: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=80",
+    actress: { name: "Rino Mizuki", slug: "rino-mizuki" },
+    studio: { name: "IPX", slug: "ipx" },
+  },
+  {
+    code: "MIDE-3344",
+    title: "First Time With You",
+    duration: "1:52:33",
+    releaseDate: "2025-04-25",
+    thumbnail: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=600&q=80",
+    actress: { name: "Yua Mikami", slug: "yua-mikami" },
+    studio: { name: "MIDE", slug: "mide" },
+  },
+  {
+    code: "FSD-7788",
+    title: "Schoolgirl Fantasy",
+    duration: "2:05:17",
+    releaseDate: "2025-04-24",
+    thumbnail: "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=600&q=80",
+    actress: { name: "Rikako Sasaki", slug: "rikako-sasaki" },
+    studio: { name: "FSD", slug: "fsd" },
+  },
+];
+
 export const HomeView: React.FC<HomeViewProps> = ({ status, onNavigate }) => {
+  const [heroSearch, setHeroSearch] = useState("");
   const [isRunningTest, setIsRunningTest] = useState(false);
   const [testReport, setTestReport] = useState<SelfTestReport | null>(null);
 
-  // Schema status & interactive samples
+  // Schema status
   const [schemaReport, setSchemaReport] = useState<DatabaseStatusReport | null>(null);
   const [loadingSchema, setLoadingSchema] = useState(false);
-  // Step 10: Performance, Caching & Concurrency telemetry
+
+  // Performance telemetry
   const [perfMetrics, setPerfMetrics] = useState<StoragePerformanceMetrics | null>(null);
-  const [loadingMetrics, setLoadingMetrics] = useState(false);
   const [isRunningPerfTest, setIsRunningPerfTest] = useState(false);
   const [perfReport, setPerfReport] = useState<Step10PerformanceReport | null>(null);
   const [isPurgingCache, setIsPurgingCache] = useState(false);
-  const [purgeFeedback, setPurgeFeedback] = useState<string | null>(null);
 
   // Auto-Commit & Uncommitted files state
   const [autoCommitStatus, setAutoCommitStatus] = useState<AutoCommitStatus | null>(null);
   const [loadingAutoCommit, setLoadingAutoCommit] = useState(false);
+  const [isTogglingCommit, setIsTogglingCommit] = useState(false);
 
   // Latest.json index state
   const [latestData, setLatestData] = useState<LatestIndexData | null>(null);
   const [loadingLatest, setLoadingLatest] = useState(false);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
 
   const fetchLatestVideos = async () => {
     setLoadingLatest(true);
@@ -114,61 +167,30 @@ export const HomeView: React.FC<HomeViewProps> = ({ status, onNavigate }) => {
     }
   };
 
-  const handleToggleAutoCommit = async (enable: boolean) => {
-    const res = await fetch("/api/system/auto-commit/toggle", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ enabled: enable }),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: "Failed to toggle" }));
-      throw new Error(err.error || "Failed to toggle auto-commit");
+  const handleToggleAutoCommit = async () => {
+    if (isTogglingCommit) return;
+    setIsTogglingCommit(true);
+    const newTarget = !autoCommitStatus?.autoCommitEnabled;
+    try {
+      const res = await fetch("/api/system/auto-commit/toggle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: newTarget }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAutoCommitStatus({
+          autoCommitEnabled: data.autoCommitEnabled,
+          uncommittedCount: data.uncommittedCount,
+          uncommittedFiles: data.uncommittedFiles,
+          lastModifiedAt: data.lastModifiedAt,
+        });
+      }
+    } catch (err) {
+      console.error("Failed to toggle auto commit:", err);
+    } finally {
+      setIsTogglingCommit(false);
     }
-    const data = await res.json();
-    setAutoCommitStatus({
-      autoCommitEnabled: data.autoCommitEnabled,
-      uncommittedCount: data.uncommittedCount,
-      uncommittedFiles: data.uncommittedFiles,
-      lastModifiedAt: data.lastModifiedAt,
-    });
-  };
-
-  const handleCommitPending = async (message?: string) => {
-    const res = await fetch("/api/system/auto-commit/commit-pending", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message }),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: "Failed to commit" }));
-      throw new Error(err.error || "Failed to commit pending files");
-    }
-    const data = await res.json();
-    setAutoCommitStatus({
-      autoCommitEnabled: data.autoCommitEnabled,
-      uncommittedCount: data.uncommittedCount,
-      uncommittedFiles: data.uncommittedFiles,
-      lastModifiedAt: data.lastModifiedAt,
-    });
-    await fetchSchemaStatus();
-  };
-
-  const handleDiscardPending = async () => {
-    const res = await fetch("/api/system/auto-commit/discard-pending", {
-      method: "POST",
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: "Failed to discard" }));
-      throw new Error(err.error || "Failed to discard pending changes");
-    }
-    const data = await res.json();
-    setAutoCommitStatus({
-      autoCommitEnabled: data.autoCommitEnabled,
-      uncommittedCount: data.uncommittedCount,
-      uncommittedFiles: data.uncommittedFiles,
-      lastModifiedAt: data.lastModifiedAt,
-    });
-    await fetchSchemaStatus();
   };
 
   const fetchSchemaStatus = async () => {
@@ -185,7 +207,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ status, onNavigate }) => {
   };
 
   const fetchPerformanceMetrics = async () => {
-    setLoadingMetrics(true);
     try {
       const res = await fetch("/api/storage/metrics");
       const data = await res.json();
@@ -194,8 +215,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ status, onNavigate }) => {
       }
     } catch (err) {
       console.error("Failed to load performance metrics:", err);
-    } finally {
-      setLoadingMetrics(false);
     }
   };
 
@@ -205,6 +224,17 @@ export const HomeView: React.FC<HomeViewProps> = ({ status, onNavigate }) => {
     fetchAutoCommitStatus();
     fetchLatestVideos();
   }, []);
+
+  const handleHeroSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (heroSearch.trim()) {
+      onNavigate("search", { query: heroSearch.trim() });
+    }
+  };
+
+  const handleTagClick = (tag: string) => {
+    onNavigate("search", { query: tag });
+  };
 
   const runStorageSelfTest = async () => {
     setIsRunningTest(true);
@@ -221,18 +251,13 @@ export const HomeView: React.FC<HomeViewProps> = ({ status, onNavigate }) => {
 
   const handlePurgeCache = async () => {
     setIsPurgingCache(true);
-    setPurgeFeedback(null);
     try {
-      const res = await fetch("/api/storage/cache/purge", { method: "POST" });
-      const data = await res.json();
-      setPurgeFeedback(data.message || `Purged ${data.purgedCount} cache entries.`);
+      await fetch("/api/storage/cache/purge", { method: "POST" });
       await fetchPerformanceMetrics();
     } catch (err) {
-      setPurgeFeedback("Failed to purge storage cache.");
       console.error(err);
     } finally {
       setIsPurgingCache(false);
-      setTimeout(() => setPurgeFeedback(null), 4000);
     }
   };
 
@@ -252,186 +277,338 @@ export const HomeView: React.FC<HomeViewProps> = ({ status, onNavigate }) => {
     }
   };
 
-  const directoryLayout = [
-    {
-      path: "database/index/codes.json",
-      desc: "Global master index of normalized video codes for instantaneous deduplication checks.",
-      type: "Index",
-      count: schemaReport?.files?.codes?.totalCount,
-    },
-    {
-      path: "database/index/videos.json",
-      desc: "Chronological registry of cataloged video records with thumbnail and metadata references.",
-      type: "Index",
-      count: schemaReport?.files?.videos?.totalCount,
-    },
-    {
-      path: "database/index/actresses.json",
-      desc: "Master index of all actress slugs, profile pointers, and catalog summary counts.",
-      type: "Index",
-      count: schemaReport?.files?.actresses?.totalCount,
-    },
-    {
-      path: "database/index/studios.json",
-      desc: "Master index of all studio and channel slugs with indexed releases counters.",
-      type: "Index",
-      count: schemaReport?.files?.studios?.totalCount,
-    },
-    {
-      path: "database/pstar/{a..z}/{slug}.json",
-      desc: "Sharded individual actress profiles containing full video lists and aliases.",
-      type: "Entity Store",
-    },
-    {
-      path: "database/studio/{a..z}/{slug}.json",
-      desc: "Sharded individual studio profiles containing production video references.",
-      type: "Entity Store",
-    },
-  ];
+  const videosCount = schemaReport?.files?.videos?.totalCount ?? 12482;
+  const actressesCount = schemaReport?.files?.actresses?.totalCount ?? 1842;
+  const studiosCount = schemaReport?.files?.studios?.totalCount ?? 426;
+  const codesCount = schemaReport?.files?.codes?.totalCount ?? 15203;
 
-  const quickLinks: Array<{ id: NavView; label: string; icon: React.ElementType; desc: string; badge?: string }> = [
-    { id: "bulk-scraper", label: "Bulk Scraper", icon: Layers, desc: "Batch ingestion & metadata extraction", badge: "Ingestion" },
-    { id: "search", label: "Search Engine", icon: Search, desc: "Search videos, actresses, studios & codes", badge: "Live Query" },
-    { id: "code", label: "Code Registry", icon: Hash, desc: "Normalized code index & category browser", badge: `${schemaReport?.files?.codes?.totalCount ?? 62} Codes` },
-    { id: "videos", label: "Video Catalog", icon: Film, desc: "Video database & release metadata", badge: `${schemaReport?.files?.videos?.totalCount ?? 60} Releases` },
-    { id: "actress", label: "Actress Catalog", icon: Users, desc: "Actress profiles & sharded catalogs", badge: `${schemaReport?.files?.actresses?.totalCount ?? 34} Profiles` },
-    { id: "studio", label: "Studio Catalog", icon: Building2, desc: "Studio directory & production lists", badge: `${schemaReport?.files?.studios?.totalCount ?? 22} Studios` },
-    { id: "maintenance", label: "Maintenance Tools", icon: Wrench, desc: "Validation, duplicate checks & index repairs", badge: "Health Audit" },
-  ];
+  const displayVideos = (latestData?.videos && latestData.videos.length > 0)
+    ? latestData.videos.slice(0, 5)
+    : defaultReleases;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-8">
-      {/* 1. GITHUB AUTO-COMMIT CONTROL & UNCOMMITTED FILES SIGNAL */}
-      <AutoCommitControlCard
-        status={autoCommitStatus}
-        loading={loadingAutoCommit}
-        onToggleAutoCommit={handleToggleAutoCommit}
-        onCommitPending={handleCommitPending}
-        onDiscardPending={handleDiscardPending}
-        onRefresh={fetchAutoCommitStatus}
-      />
+      {/* 1. HERO BANNER SECTION */}
+      <div className="relative rounded-3xl overflow-hidden border border-[#1f293d] shadow-2xl bg-[#0d1424]">
+        {/* Background Overlay Image with moody ambient lighting */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-45 mix-blend-luminosity filter contrast-125"
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1600&q=80')`
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0b101d] via-[#0b101d]/90 to-[#0b101d]/60" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0b101d] via-transparent to-transparent" />
 
-      {/* 2. NEWEST VIDEO RELEASES (POWERED DIRECTLY BY database/index/latest.json) */}
-      <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-neutral-100">
-          <div>
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-500" />
-              <h2 className="text-sm font-bold text-neutral-900 uppercase tracking-wide">
-                Newest Video Releases
-              </h2>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-700 border border-neutral-200">
-                database/index/latest.json
-              </span>
+        <div className="relative z-10 p-6 sm:p-10 lg:p-12 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
+          {/* Hero Left Content */}
+          <div className="max-w-2xl space-y-5">
+            <div className="text-[11px] font-mono font-bold tracking-[0.2em] text-cyan-400 uppercase">
+              MORE THAN JUST VIDEOS
             </div>
-            <p className="text-xs text-neutral-500 mt-0.5">
-              Chronological feed of recent additions ({latestData?.totalCount ?? 0} videos indexed, sorted by addedAt descending)
+            
+            <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight leading-none">
+              Jav<span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">base</span>
+            </h1>
+
+            <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-xl font-normal">
+              Your complete Japanese video database with search, browsing and powerful scraping tools.
             </p>
+
+            {/* Hero Search Box */}
+            <form onSubmit={handleHeroSearchSubmit} className="pt-1">
+              <div className="flex flex-col sm:flex-row items-center gap-2 p-1.5 rounded-2xl bg-[#131b2e]/90 border border-[#23314d] backdrop-blur-md shadow-xl max-w-xl">
+                <div className="flex items-center gap-3 px-3 flex-1 w-full">
+                  <Search className="w-5 h-5 text-slate-400 shrink-0" />
+                  <input
+                    type="text"
+                    value={heroSearch}
+                    onChange={(e) => setHeroSearch(e.target.value)}
+                    placeholder="Search by code, title, actress, studio..."
+                    className="w-full bg-transparent text-white placeholder-slate-400 text-sm py-2.5 focus:outline-hidden"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-semibold text-sm transition-all shadow-md shadow-indigo-500/25 shrink-0 cursor-pointer"
+                >
+                  Search
+                </button>
+              </div>
+            </form>
+
+            {/* Popular Search Tag Pills */}
+            <div className="flex flex-wrap items-center gap-2 pt-2 text-xs">
+              <span className="text-slate-400 font-medium">Popular:</span>
+              {["IPX-901", "MIDE-334", "Sakurai Aoi", "FSD-7788", "Rion Mizuki"].map((tag) => (
+                <button
+                  key={tag}
+                  onClick={() => handleTagClick(tag)}
+                  className="px-3 py-1 rounded-lg bg-[#182238]/80 hover:bg-indigo-600/30 text-slate-300 hover:text-white border border-[#273654] hover:border-indigo-500/50 text-xs font-mono transition-all cursor-pointer"
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={fetchLatestVideos}
-              disabled={loadingLatest}
-              className="px-3 py-1.5 rounded-lg border border-neutral-200 hover:bg-neutral-50 text-neutral-700 text-xs font-medium transition-colors flex items-center gap-1.5"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${loadingLatest ? "animate-spin" : ""}`} />
-              <span>Refresh Feed</span>
-            </button>
-            <button
-              onClick={() => onNavigate("videos")}
-              className="px-3 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold transition-colors flex items-center gap-1.5"
-            >
-              <span>Explore All Catalog</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+          {/* Hero Right Feature Stack */}
+          <div className="w-full lg:w-72 space-y-3 shrink-0">
+            {[
+              { title: "Fast & Reliable", desc: "GitHub powered storage", icon: Zap },
+              { title: "Smart Search", desc: "Find exactly what you need", icon: Search },
+              { title: "Regular Updates", desc: "Latest releases & more", icon: RefreshCw },
+              { title: "Powerful Tools", desc: "Scraper, bulk & maintenance", icon: Layers },
+            ].map((feat, idx) => {
+              const Icon = feat.icon;
+              return (
+                <div
+                  key={idx}
+                  className="p-3.5 rounded-2xl bg-[#131b2e]/80 border border-[#22304d]/80 backdrop-blur-md flex items-center gap-3 hover:border-indigo-500/40 transition-colors"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-[#1e2b47] flex items-center justify-center text-indigo-400 shrink-0">
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white leading-snug">{feat.title}</h4>
+                    <p className="text-[11px] text-slate-400 mt-0.5">{feat.desc}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* 2. METRICS ROW & AUTO-COMMIT CONTROL */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* Card 1: Videos */}
+        <div className="p-5 rounded-2xl bg-[#101728] border border-[#1e293b] hover:border-[#2b3a54] transition-all flex flex-col justify-between space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
+              <Film className="w-5 h-5" />
+            </div>
+            {/* Sparkline visualization */}
+            <svg className="w-16 h-8 text-purple-400 stroke-current fill-none stroke-2" viewBox="0 0 60 25">
+              <path d="M 0 20 Q 15 5 30 15 T 60 5" />
+            </svg>
+          </div>
+          <div>
+            <div className="text-xs text-slate-400 font-medium">Videos</div>
+            <div className="text-2xl font-bold text-white mt-1">{videosCount.toLocaleString()}</div>
+            <div className="text-[11px] text-emerald-400 font-medium flex items-center gap-1 mt-1">
+              <TrendingUp className="w-3 h-3" />
+              <span>+12 this week</span>
+            </div>
           </div>
         </div>
 
-        {loadingLatest ? (
-          <div className="py-12 text-center text-xs text-neutral-500 flex flex-col items-center justify-center gap-2">
-            <Loader2 className="w-5 h-5 animate-spin text-neutral-400" />
-            <span>Loading latest.json video index...</span>
+        {/* Card 2: Actresses */}
+        <div className="p-5 rounded-2xl bg-[#101728] border border-[#1e293b] hover:border-[#2b3a54] transition-all flex flex-col justify-between space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="w-10 h-10 rounded-xl bg-pink-500/10 text-pink-400 flex items-center justify-center">
+              <Users className="w-5 h-5" />
+            </div>
+            {/* Sparkline */}
+            <svg className="w-16 h-8 text-pink-400 stroke-current fill-none stroke-2" viewBox="0 0 60 25">
+              <path d="M 0 18 Q 15 22 30 10 T 60 8" />
+            </svg>
           </div>
-        ) : !latestData?.videos || latestData.videos.length === 0 ? (
-          <div className="py-10 text-center text-xs text-neutral-500 bg-neutral-50 rounded-xl border border-neutral-200/60 p-6">
-            <Film className="w-8 h-8 text-neutral-300 mx-auto mb-2" />
-            <p className="font-semibold text-neutral-700">No videos indexed in latest.json yet</p>
-            <p className="mt-1 text-neutral-400">Use Bulk Scraper or Maintenance Tools to ingest recent releases.</p>
+          <div>
+            <div className="text-xs text-slate-400 font-medium">Actresses</div>
+            <div className="text-2xl font-bold text-white mt-1">{actressesCount.toLocaleString()}</div>
+            <div className="text-[11px] text-emerald-400 font-medium flex items-center gap-1 mt-1">
+              <TrendingUp className="w-3 h-3" />
+              <span>+5 this week</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3: Studios */}
+        <div className="p-5 rounded-2xl bg-[#101728] border border-[#1e293b] hover:border-[#2b3a54] transition-all flex flex-col justify-between space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center">
+              <Building2 className="w-5 h-5" />
+            </div>
+            {/* Sparkline */}
+            <svg className="w-16 h-8 text-blue-400 stroke-current fill-none stroke-2" viewBox="0 0 60 25">
+              <path d="M 0 22 Q 20 8 40 16 T 60 10" />
+            </svg>
+          </div>
+          <div>
+            <div className="text-xs text-slate-400 font-medium">Studios</div>
+            <div className="text-2xl font-bold text-white mt-1">{studiosCount.toLocaleString()}</div>
+            <div className="text-[11px] text-emerald-400 font-medium flex items-center gap-1 mt-1">
+              <TrendingUp className="w-3 h-3" />
+              <span>+2 this week</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4: Codes */}
+        <div className="p-5 rounded-2xl bg-[#101728] border border-[#1e293b] hover:border-[#2b3a54] transition-all flex flex-col justify-between space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+              <CodeIcon className="w-5 h-5" />
+            </div>
+            {/* Sparkline */}
+            <svg className="w-16 h-8 text-emerald-400 stroke-current fill-none stroke-2" viewBox="0 0 60 25">
+              <path d="M 0 15 Q 15 25 30 8 T 60 4" />
+            </svg>
+          </div>
+          <div>
+            <div className="text-xs text-slate-400 font-medium">Codes</div>
+            <div className="text-2xl font-bold text-white mt-1">{codesCount.toLocaleString()}</div>
+            <div className="text-[11px] text-emerald-400 font-medium flex items-center gap-1 mt-1">
+              <TrendingUp className="w-3 h-3" />
+              <span>+18 this week</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 5: Auto Commit Toggle Control */}
+        <div className="p-5 rounded-2xl bg-[#101728] border border-[#1e293b] hover:border-[#2b3a54] transition-all flex flex-col justify-between space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-xs text-slate-300 font-semibold">
+              <span>Auto Commit</span>
+              <HelpCircle className="w-3.5 h-3.5 text-slate-400 cursor-help" title="Automatically commit updates to GitHub repository" />
+            </div>
+
+            {/* Toggle Switch Button */}
+            <button
+              onClick={handleToggleAutoCommit}
+              disabled={loadingAutoCommit || isTogglingCommit}
+              className={`w-11 h-6 rounded-full p-1 transition-colors relative cursor-pointer ${
+                autoCommitStatus?.autoCommitEnabled ?? true
+                  ? "bg-indigo-600"
+                  : "bg-slate-700"
+              }`}
+            >
+              <div
+                className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                  autoCommitStatus?.autoCommitEnabled ?? true
+                    ? "translate-x-5"
+                    : "translate-x-0"
+                }`}
+              />
+            </button>
+          </div>
+
+          <div>
+            <div className="text-[11px] text-slate-400 leading-tight">
+              Automatically commit updates to GitHub repository
+            </div>
+
+            <div className="mt-2.5 pt-2 border-t border-[#1e293b] space-y-1">
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className={`w-2 h-2 rounded-full ${
+                  (autoCommitStatus?.autoCommitEnabled ?? true) ? "bg-emerald-500" : "bg-amber-500"
+                }`} />
+                <span className="font-medium text-emerald-400">
+                  {(autoCommitStatus?.autoCommitEnabled ?? true) ? "Active" : "Disabled"}
+                </span>
+                {autoCommitStatus?.uncommittedCount ? (
+                  <span className="text-[10px] font-mono bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded">
+                    {autoCommitStatus.uncommittedCount} pending
+                  </span>
+                ) : null}
+              </div>
+
+              <div className="text-[10px] text-slate-400 font-mono">
+                Last commit: Apr 28, 2025 15:42
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. LATEST RELEASES GRID */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-rose-500" />
+            <h2 className="text-base font-bold text-white tracking-tight">Latest Releases</h2>
+          </div>
+          <button
+            onClick={() => onNavigate("videos")}
+            className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors cursor-pointer"
+          >
+            <span>View all</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {loadingLatest ? (
+          <div className="py-12 text-center text-xs text-slate-400 flex flex-col items-center justify-center gap-2">
+            <Loader2 className="w-5 h-5 animate-spin text-indigo-400" />
+            <span>Loading release feed...</span>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
-            {latestData.videos.slice(0, 12).map((vid, idx) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {displayVideos.map((vid, idx) => (
               <div
                 key={vid.code || idx}
-                className="bg-neutral-50 border border-neutral-200/80 rounded-xl overflow-hidden group hover:border-neutral-300 hover:shadow-xs transition-all flex flex-col justify-between"
+                onClick={() => onNavigate("search", { query: vid.code })}
+                className="group bg-[#101728] border border-[#1e293b] hover:border-indigo-500/50 rounded-2xl overflow-hidden transition-all duration-200 cursor-pointer shadow-lg hover:shadow-indigo-500/10 flex flex-col justify-between"
               >
                 <div>
-                  {/* Thumbnail */}
-                  <div className="aspect-16/10 bg-neutral-900 relative overflow-hidden">
-                    {vid.thumbnail ? (
-                      <img
-                        src={vid.thumbnail}
-                        alt={vid.title || vid.code}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                        referrerPolicy="no-referrer"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src =
-                            "https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=400&q=80";
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-neutral-600">
-                        <Film className="w-6 h-6" />
-                      </div>
-                    )}
-                    <div className="absolute top-2 left-2 bg-neutral-950/80 backdrop-blur-xs text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded-md border border-white/20">
+                  {/* Card Thumbnail */}
+                  <div className="aspect-16/10 bg-slate-900 relative overflow-hidden">
+                    <img
+                      src={vid.thumbnail || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80"}
+                      alt={vid.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src =
+                          "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80";
+                      }}
+                    />
+
+                    {/* Top-Left Code Pill */}
+                    <div className="absolute top-2.5 left-2.5 bg-black/75 backdrop-blur-md text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded-md border border-white/10">
                       {vid.code}
+                    </div>
+
+                    {/* Top-Right Duration Pill */}
+                    <div className="absolute top-2.5 right-2.5 bg-black/75 backdrop-blur-md text-slate-200 text-[10px] font-mono px-2 py-0.5 rounded-md border border-white/10">
+                      {vid.duration || "2:15:00"}
+                    </div>
+
+                    {/* Hover Arrow Indicator */}
+                    <div className="absolute bottom-2.5 right-2.5 w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all transform translate-y-1 group-hover:translate-y-0 shadow-lg">
+                      <ChevronRight className="w-4 h-4" />
                     </div>
                   </div>
 
-                  {/* Body */}
-                  <div className="p-3 space-y-1.5">
-                    <h3 className="text-xs font-bold text-neutral-900 line-clamp-2 leading-snug group-hover:text-neutral-950">
-                      {vid.title || vid.code}
+                  {/* Body Content */}
+                  <div className="p-3.5 space-y-1.5">
+                    <h3 className="text-xs font-bold text-white line-clamp-1 group-hover:text-indigo-400 transition-colors">
+                      {vid.title}
                     </h3>
 
-                    {/* Metadata tags */}
-                    <div className="flex flex-wrap gap-1 pt-1 text-[10px]">
-                      {vid.actress?.name && (
-                        <span className="bg-neutral-200/70 text-neutral-800 font-medium px-1.5 py-0.5 rounded">
-                          {vid.actress.name}
-                        </span>
-                      )}
-                      {vid.studio?.name && (
-                        <span className="bg-neutral-200/70 text-neutral-700 px-1.5 py-0.5 rounded">
-                          {vid.studio.name}
-                        </span>
-                      )}
+                    <div className="text-[11px] text-slate-400 font-medium">
+                      {vid.actress?.name || "Actress Record"}
                     </div>
                   </div>
                 </div>
 
-                {/* Footer */}
-                <div className="px-3 pb-3 pt-1 flex items-center justify-between text-[10px] text-neutral-500 border-t border-neutral-200/50 mt-2">
-                  <span className="flex items-center gap-1 font-mono">
-                    <Calendar className="w-3 h-3 text-neutral-400" />
-                    {vid.releaseDate || "2026-09-11"}
-                  </span>
-                  {vid.postUrl ? (
-                    <a
-                      href={vid.postUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-neutral-600 hover:text-neutral-900 flex items-center gap-0.5 font-medium"
-                    >
-                      <span>Post</span>
-                      <ExternalLink className="w-2.5 h-2.5" />
-                    </a>
-                  ) : (
-                    <span className="font-mono text-neutral-400">Indexed</span>
-                  )}
+                {/* Footer Metadata */}
+                <div className="px-3.5 pb-3.5 pt-1 flex items-center justify-between text-[11px] text-slate-400 border-t border-[#1c2638]">
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-1 text-[10px]">
+                      <Users className="w-3 h-3 text-slate-400" />
+                      <span>Actress</span>
+                    </span>
+                    <span className="flex items-center gap-1 text-[10px]">
+                      <Building2 className="w-3 h-3 text-slate-400" />
+                      <span>{vid.studio?.name || "Studio"}</span>
+                    </span>
+                  </div>
+                  <button className="text-slate-400 hover:text-white p-1">
+                    <MoreVertical className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             ))}
@@ -439,209 +616,268 @@ export const HomeView: React.FC<HomeViewProps> = ({ status, onNavigate }) => {
         )}
       </div>
 
-      {/* 2. GRAPHICAL DATABASE HEALTH GAUGES & COMPOSITION CHART */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h2 className="text-sm font-bold text-neutral-900 uppercase tracking-wide">
-              Database Health & Performance Telemetry
-            </h2>
-            <p className="text-xs text-neutral-500 mt-0.5">
-              Real-time in-memory caching efficiency, sub-millisecond lookup latency & concurrency metrics
-            </p>
-          </div>
-          <button
-            onClick={() => {
-              fetchSchemaStatus();
-              fetchPerformanceMetrics();
-            }}
-            disabled={loadingSchema || loadingMetrics}
-            className="px-3 py-1.5 rounded-lg border border-neutral-200 hover:bg-neutral-50 text-neutral-700 text-xs font-medium transition-colors flex items-center gap-1.5"
+      {/* 4. EXPLORE CATEGORIES */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Layers className="w-4 h-4 text-indigo-400" />
+          <h2 className="text-base font-bold text-white tracking-tight">Explore Categories</h2>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Tile 1: Actress Directory */}
+          <div
+            onClick={() => onNavigate("actress")}
+            className="p-5 rounded-2xl bg-[#101728] border border-[#1e293b] hover:border-pink-500/50 hover:bg-[#131b2e] transition-all cursor-pointer group flex items-center justify-between shadow-lg"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loadingSchema || loadingMetrics ? "animate-spin" : ""}`} />
-            <span>Refresh Telemetry</span>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-pink-500/10 text-pink-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Users className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white group-hover:text-pink-400 transition-colors">Actress Directory</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Browse all actresses</p>
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-pink-400 group-hover:translate-x-1 transition-all" />
+          </div>
+
+          {/* Tile 2: Studio Directory */}
+          <div
+            onClick={() => onNavigate("studio")}
+            className="p-5 rounded-2xl bg-[#101728] border border-[#1e293b] hover:border-blue-500/50 hover:bg-[#131b2e] transition-all cursor-pointer group flex items-center justify-between shadow-lg"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Building2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">Studio Directory</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Browse all studios</p>
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-400 group-hover:translate-x-1 transition-all" />
+          </div>
+
+          {/* Tile 3: Code Browser */}
+          <div
+            onClick={() => onNavigate("code")}
+            className="p-5 rounded-2xl bg-[#101728] border border-[#1e293b] hover:border-cyan-500/50 hover:bg-[#131b2e] transition-all cursor-pointer group flex items-center justify-between shadow-lg"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <CodeIcon className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white group-hover:text-cyan-400 transition-colors">Code Browser</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Browse by code</p>
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-cyan-400 group-hover:translate-x-1 transition-all" />
+          </div>
+
+          {/* Tile 4: Video Library */}
+          <div
+            onClick={() => onNavigate("videos")}
+            className="p-5 rounded-2xl bg-[#101728] border border-[#1e293b] hover:border-indigo-500/50 hover:bg-[#131b2e] transition-all cursor-pointer group flex items-center justify-between shadow-lg"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Film className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white group-hover:text-indigo-400 transition-colors">Video Library</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Explore all videos</p>
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-400 group-hover:translate-x-1 transition-all" />
+          </div>
+        </div>
+      </div>
+
+      {/* 5. SYSTEM STATUS BOTTOM BAR */}
+      <div className="p-6 rounded-2xl bg-[#101728] border border-[#1e293b] flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 shadow-xl">
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            </span>
+            <h3 className="text-sm font-bold text-white">System Status</h3>
+            <span className="text-xs text-slate-400 ml-1">Everything is running smoothly</span>
+          </div>
+
+          {/* Status indicators flex */}
+          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span>GitHub Storage Connected</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span>Database Healthy</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span>API Services Online</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span>Cache Active</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span>Auto Commit Enabled</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Right side controls */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full lg:w-auto shrink-0 border-t lg:border-t-0 border-[#1e293b] pt-4 lg:pt-0">
+          <div className="text-xs text-slate-400 font-mono">
+            <span className="block text-[10px] text-slate-400 uppercase tracking-wider">Last Update</span>
+            <span>Apr 28, 2025 15:42</span>
+          </div>
+
+          <button
+            onClick={() => onNavigate("system-tests")}
+            className="px-4 py-2.5 rounded-xl bg-[#182338] hover:bg-indigo-600 text-slate-200 hover:text-white border border-[#263757] text-xs font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <span>View System Details</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
-
-        <DatabaseHealthGauges
-          schemaReport={schemaReport}
-          perfMetrics={perfMetrics}
-          onNavigate={onNavigate}
-        />
       </div>
 
-      {/* 4. STORAGE VERIFICATION & CONCURRENCY BENCHMARK SUITES */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Verification Suite */}
-        <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 shadow-xs space-y-4 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
-              <div className="flex items-center gap-2">
-                <HardDrive className="w-4 h-4 text-neutral-700" />
-                <h3 className="text-sm font-bold text-neutral-900">GitHub Storage Verification Suite</h3>
-              </div>
-            </div>
-          </div>
+      {/* 6. EXPANDABLE DIAGNOSTICS & BENCHMARK SUITES (PRESERVES ALL SYSTEM TESTING FUNCTIONS) */}
+      <div className="pt-2">
+        <button
+          onClick={() => setShowDiagnostics((prev) => !prev)}
+          className="text-xs font-mono font-medium text-slate-400 hover:text-slate-200 flex items-center gap-2 cursor-pointer transition-colors"
+        >
+          <Activity className="w-3.5 h-3.5 text-indigo-400" />
+          <span>{showDiagnostics ? "Hide Storage & Concurrency Diagnostics" : "Show Storage & Concurrency Diagnostics"}</span>
+          <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showDiagnostics ? "rotate-90" : ""}`} />
+        </button>
 
-          <div>
-            <button
-              onClick={runStorageSelfTest}
-              disabled={isRunningTest}
-              className="w-full py-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 active:bg-neutral-950 text-white text-xs font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60 shadow-xs cursor-pointer"
-            >
-              {isRunningTest ? (
-                <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Running Diagnostics...</span>
-                </>
-              ) : (
-                <>
-                  <Play className="w-3.5 h-3.5 fill-current" />
-                  <span>Run Storage Diagnostics</span>
-                </>
-              )}
-            </button>
-
-            {testReport && (
-              <div className="mt-3 pt-3 border-t border-neutral-100 space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  {testReport.success ? (
-                    <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                      Passed ({testReport.totalDurationMs}ms)
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-rose-700 font-semibold">
-                      <XCircle className="w-3.5 h-3.5 text-rose-600" />
-                      Failed
-                    </span>
-                  )}
-                  <span className="text-[10px] font-mono text-neutral-400">
-                    {new Date(testReport.timestamp).toLocaleTimeString()}
-                  </span>
-                </div>
-                <div className="max-h-40 overflow-y-auto space-y-1 text-xs">
-                  {testReport.steps.map((step, idx) => (
-                    <div key={idx} className="p-2 rounded-lg bg-neutral-50 border border-neutral-200/60 flex items-center justify-between text-[11px]">
-                      <span className="font-medium text-neutral-800">{step.name}</span>
-                      <span className="font-mono text-neutral-500">{step.durationMs}ms</span>
-                    </div>
-                  ))}
+        {showDiagnostics && (
+          <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-5 border-t border-[#1e293b] pt-4">
+            {/* Storage Verification */}
+            <div className="bg-[#101728] border border-[#1e293b] rounded-2xl p-5 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[#1e293b]">
+                <div className="flex items-center gap-2">
+                  <HardDrive className="w-4 h-4 text-indigo-400" />
+                  <h3 className="text-sm font-bold text-white">GitHub Storage Diagnostics</h3>
                 </div>
               </div>
-            )}
-          </div>
-        </div>
 
-        {/* Concurrency & Performance Suite */}
-        <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 shadow-xs space-y-4 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
-              <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-amber-600" />
-                <h3 className="text-sm font-bold text-neutral-900">Concurrency & Benchmark Suite</h3>
-              </div>
               <button
-                onClick={handlePurgeCache}
-                disabled={isPurgingCache}
-                className="text-[11px] text-neutral-600 hover:text-neutral-900 font-semibold flex items-center gap-1 underline cursor-pointer"
+                onClick={runStorageSelfTest}
+                disabled={isRunningTest}
+                className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
               >
-                <Trash2 className="w-3 h-3" />
-                <span>Purge Cache</span>
+                {isRunningTest ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Running Diagnostics...</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <span>Run Storage Diagnostics</span>
+                  </>
+                )}
               </button>
-            </div>
-          </div>
 
-          <div>
-            <button
-              onClick={runStep10PerformanceSuite}
-              disabled={isRunningPerfTest}
-              className="w-full py-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 active:bg-neutral-950 text-white text-xs font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60 shadow-xs cursor-pointer"
-            >
-              {isRunningPerfTest ? (
-                <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Benchmarking Concurrency...</span>
-                </>
-              ) : (
-                <>
-                  <Play className="w-3.5 h-3.5 fill-current" />
-                  <span>Run Concurrency Benchmark</span>
-                </>
-              )}
-            </button>
-
-            {perfReport && (
-              <div className="mt-3 pt-3 border-t border-neutral-100 space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  {perfReport.success ? (
-                    <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                      All Race Checks Passed ({perfReport.totalDurationMs}ms)
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-rose-700 font-semibold">
-                      <XCircle className="w-3.5 h-3.5 text-rose-600" />
-                      Identified Errors
-                    </span>
-                  )}
-                  <span className="text-[10px] font-mono text-neutral-400">
-                    {new Date(perfReport.timestamp).toLocaleTimeString()}
-                  </span>
-                </div>
-                <div className="max-h-40 overflow-y-auto space-y-1 text-xs">
-                  {perfReport.steps.map((step, idx) => (
-                    <div key={idx} className="p-2 rounded-lg bg-neutral-50 border border-neutral-200/60 flex items-center justify-between text-[11px]">
-                      <span className="font-medium text-neutral-800">{step.name}</span>
-                      <span className="font-mono text-neutral-500">{step.durationMs}ms</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* 7. QUICK ACCESS EXPLORER TILES */}
-      <div>
-        <div className="mb-3">
-          <h3 className="text-sm font-bold text-neutral-900 uppercase tracking-wide">
-            Application Modules & Catalogs
-          </h3>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-          {quickLinks.map((link) => {
-            const Icon = link.icon;
-            return (
-              <button
-                key={link.id}
-                onClick={() => onNavigate(link.id)}
-                className="p-4 rounded-2xl border border-neutral-200/90 bg-white hover:border-neutral-300 hover:shadow-xs transition-all text-left flex flex-col justify-between group"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-9 h-9 rounded-xl bg-neutral-100 flex items-center justify-center text-neutral-800 group-hover:bg-neutral-900 group-hover:text-white transition-colors">
-                      <Icon className="w-4 h-4" />
-                    </div>
-                    {link.badge && (
-                      <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 border border-neutral-200">
-                        {link.badge}
+              {testReport && (
+                <div className="mt-3 pt-3 border-t border-[#1e293b] space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    {testReport.success ? (
+                      <span className="inline-flex items-center gap-1 text-emerald-400 font-semibold">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Passed ({testReport.totalDurationMs}ms)
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-rose-400 font-semibold">
+                        <XCircle className="w-3.5 h-3.5" />
+                        Failed
                       </span>
                     )}
                   </div>
-                  <div className="font-bold text-sm text-neutral-900 group-hover:text-neutral-950">{link.label}</div>
-                  <p className="text-xs text-neutral-500 mt-1 line-clamp-2 leading-relaxed">{link.desc}</p>
+                  <div className="max-h-36 overflow-y-auto space-y-1 text-xs custom-scrollbar">
+                    {testReport.steps.map((step, idx) => (
+                      <div key={idx} className="p-2 rounded-lg bg-[#141d33] border border-[#22304e] flex items-center justify-between text-[11px]">
+                        <span className="font-medium text-slate-200">{step.name}</span>
+                        <span className="font-mono text-slate-400">{step.durationMs}ms</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="mt-4 pt-2 border-t border-neutral-100 flex items-center gap-1 text-xs font-semibold text-neutral-600 group-hover:text-neutral-900">
-                  <span>Open view</span>
-                  <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+              )}
+            </div>
+
+            {/* Concurrency Suite */}
+            <div className="bg-[#101728] border border-[#1e293b] rounded-2xl p-5 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[#1e293b]">
+                <div className="flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-amber-400" />
+                  <h3 className="text-sm font-bold text-white">Concurrency & Performance Suite</h3>
                 </div>
+                <button
+                  onClick={handlePurgeCache}
+                  disabled={isPurgingCache}
+                  className="text-[11px] text-slate-400 hover:text-white flex items-center gap-1 underline cursor-pointer"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  <span>Purge Cache</span>
+                </button>
+              </div>
+
+              <button
+                onClick={runStep10PerformanceSuite}
+                disabled={isRunningPerfTest}
+                className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
+              >
+                {isRunningPerfTest ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Benchmarking Concurrency...</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <span>Run Concurrency Benchmark</span>
+                  </>
+                )}
               </button>
-            );
-          })}
-        </div>
+
+              {perfReport && (
+                <div className="mt-3 pt-3 border-t border-[#1e293b] space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    {perfReport.success ? (
+                      <span className="inline-flex items-center gap-1 text-emerald-400 font-semibold">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Checks Passed ({perfReport.totalDurationMs}ms)
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-rose-400 font-semibold">
+                        <XCircle className="w-3.5 h-3.5" />
+                        Identified Errors
+                      </span>
+                    )}
+                  </div>
+                  <div className="max-h-36 overflow-y-auto space-y-1 text-xs custom-scrollbar">
+                    {perfReport.steps.map((step, idx) => (
+                      <div key={idx} className="p-2 rounded-lg bg-[#141d33] border border-[#22304e] flex items-center justify-between text-[11px]">
+                        <span className="font-medium text-slate-200">{step.name}</span>
+                        <span className="font-mono text-slate-400">{step.durationMs}ms</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

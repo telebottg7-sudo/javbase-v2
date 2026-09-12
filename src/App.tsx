@@ -63,7 +63,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen w-screen bg-neutral-50 text-neutral-900 overflow-hidden font-sans">
+    <div className="flex h-screen w-screen bg-[#090d16] text-slate-100 overflow-hidden font-sans antialiased selection:bg-indigo-500 selection:text-white">
       {/* Collapsible & Mobile Responsive Left Sidebar */}
       <Sidebar
         currentView={currentView}
@@ -76,15 +76,16 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#090d16]">
         <Header
           currentView={currentView}
           status={status}
           isCollapsed={isCollapsed}
           onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
           onOpenMobileSidebar={() => setMobileOpen(true)}
+          onNavigate={handleNavigate}
         />
-        <main className="flex-1 overflow-y-auto min-w-0">
+        <main className="flex-1 overflow-y-auto min-w-0 custom-scrollbar">
           {renderView()}
         </main>
       </div>
