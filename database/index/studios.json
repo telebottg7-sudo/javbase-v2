@@ -1,8 +1,17 @@
 {
   "version": 1,
-  "updatedAt": "2026-09-12T14:59:29.050Z",
-  "totalCount": 4,
+  "updatedAt": "2026-09-12T16:21:56.424Z",
+  "totalCount": 5,
   "studios": [
+    {
+      "slug": "attackers",
+      "name": "Attackers",
+      "letter": "a",
+      "path": "studio/a/attackers.json",
+      "thumbnail": "https://javtiful.com/uploads/uploads/videos/thumbs/2026/05/30/ff6ba76df6b31c1a04509389bb84938f.jpg",
+      "videoCount": 95,
+      "updatedAt": "2026-09-12T16:21:56.424Z"
+    },
     {
       "slug": "moodyz",
       "name": "MOODYZ",

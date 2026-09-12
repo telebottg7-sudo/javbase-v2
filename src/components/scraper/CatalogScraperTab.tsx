@@ -26,6 +26,8 @@ interface CatalogScraperTabProps {
   batchIngesting: boolean;
   ingestingCode: string | null;
   autoCommitEnabled?: boolean;
+  crawlProgress?: number;
+  crawlStatusText?: string;
   uncommittedCount?: number;
   onPageChange: (page: number) => void;
   onIngestAll: () => void;
@@ -46,6 +48,8 @@ export const CatalogScraperTab: React.FC<CatalogScraperTabProps> = ({
   batchIngesting,
   ingestingCode,
   autoCommitEnabled = true,
+  crawlProgress = 0,
+  crawlStatusText = "",
   uncommittedCount = 0,
   onPageChange,
   onIngestAll,
@@ -158,6 +162,21 @@ export const CatalogScraperTab: React.FC<CatalogScraperTabProps> = ({
             </button>
           </div>
         </div>
+
+
+      {batchIngesting && crawlProgress > 0 && (
+        <div className="w-full bg-neutral-200 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden shadow-inner mt-4">
+          <div 
+            className="bg-emerald-600 h-2.5 rounded-full transition-all duration-300" 
+            style={{ width: `${crawlProgress}%` }}
+          ></div>
+        </div>
+      )}
+      {batchIngesting && crawlStatusText && (
+        <div className="text-xs text-neutral-500 dark:text-slate-400 font-medium text-center mt-1.5 animate-pulse">
+          {crawlStatusText}
+        </div>
+      )}
 
         {/* Options */}
         <div className="flex items-center gap-4 text-xs text-neutral-600 dark:text-slate-400 pt-1 border-t border-neutral-100 flex-wrap">

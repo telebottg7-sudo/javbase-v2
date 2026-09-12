@@ -1,0 +1,22 @@
+{
+  "slug": "takeda-yume",
+  "name": "Takeda Yume",
+  "letter": "t",
+  "aliases": [],
+  "thumbnail": "https://javtiful.com/uploads/uploads/videos/thumbs/2026/05/01/26046de15f3d53c0d0561ec0260f6ab1.jpg",
+  "videoCount": 1,
+  "videos": [
+    {
+      "code": "ADN-770",
+      "title": "ADN-770 Please Forgive Me... A Lonely Visitor",
+      "thumbnail": "https://javtiful.com/uploads/uploads/videos/thumbs/2026/05/01/26046de15f3d53c0d0561ec0260f6ab1.jpg",
+      "postUrl": "https://javtiful.com/video/107064/adn-770",
+      "studioSlug": "attackers",
+      "studioName": "Attackers",
+      "releaseDate": "2026-04-30",
+      "addedAt": "2026-09-12T16:21:56.424Z"
+    }
+  ],
+  "createdAt": "2026-09-12T16:22:07.360Z",
+  "updatedAt": "2026-09-12T16:21:56.424Z"
+}

@@ -42,6 +42,8 @@ interface StudioDirectoryTabProps {
   ingestingCode: string | null;
   onLoadStudios: (page: number, force?: boolean) => void;
   batchIngesting?: boolean;
+  crawlProgress?: number;
+  crawlStatusText?: string;
   onAutoCrawlAndSave?: (pagesToCrawl: number) => void;
   onSelectStudio: (slug: string, name?: string) => void;
   onBackToDirectory: () => void;
@@ -63,6 +65,8 @@ export const StudioDirectoryTab: React.FC<StudioDirectoryTabProps> = ({
   studioVideosPagination,
   ingestingCode,
   batchIngesting = false,
+  crawlProgress = 0,
+  crawlStatusText = "",
   onAutoCrawlAndSave,
   onLoadStudios,
   onSelectStudio,
@@ -151,6 +155,21 @@ export const StudioDirectoryTab: React.FC<StudioDirectoryTabProps> = ({
               </button>
             </div>
           </div>
+
+
+          {batchIngesting && crawlProgress > 0 && (
+            <div className="w-full bg-neutral-200 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden shadow-inner mt-4">
+              <div 
+                className="bg-emerald-600 h-2.5 rounded-full transition-all duration-300" 
+                style={{ width: `${crawlProgress}%` }}
+              ></div>
+            </div>
+          )}
+          {batchIngesting && crawlStatusText && (
+            <div className="text-xs text-neutral-500 dark:text-slate-400 font-medium text-center mt-1.5 animate-pulse">
+              {crawlStatusText}
+            </div>
+          )}
 
           <div className="flex items-center gap-3 pt-2 border-t border-neutral-100">
             <div className="w-12 h-12 rounded-xl bg-neutral-100 dark:bg-slate-800 border border-neutral-200 dark:border-[#1e293b] flex items-center justify-center text-neutral-700 dark:text-slate-300 shrink-0 shadow-xs">
