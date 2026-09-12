@@ -1,0 +1,22 @@
+{
+  "slug": "amami-mea",
+  "name": "Amami Mea",
+  "letter": "a",
+  "aliases": [],
+  "thumbnail": "https://javtiful.com/uploads/uploads/videos/thumbs/2026/05/16/1f129575f6d82acac9fae106d2601baa.jpg",
+  "videoCount": 1,
+  "videos": [
+    {
+      "code": "MUKC-126",
+      "title": "MUKC-126 Arrogant Card Battle Heroine Defeated - Complete Guide To Card Battler",
+      "thumbnail": "https://javtiful.com/uploads/uploads/videos/thumbs/2026/05/16/1f129575f6d82acac9fae106d2601baa.jpg",
+      "postUrl": "https://javtiful.com/video/108038/mukc-126",
+      "studioSlug": "muku",
+      "studioName": "Muku",
+      "releaseDate": "2026-05-16",
+      "addedAt": "2026-09-12T17:32:09.727Z"
+    }
+  ],
+  "createdAt": "2026-09-12T17:32:19.670Z",
+  "updatedAt": "2026-09-12T17:32:09.727Z"
+}
