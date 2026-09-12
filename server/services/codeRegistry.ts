@@ -240,13 +240,41 @@ export class CodeRegistryService {
   /**
    * Returns rich summaries for all code categories in the database.
    */
+
+  private async readVideosIndex(): Promise<VideosIndexFile | null> {
+    const mainFile = await this.storage.readFile<any>("index/videos.json");
+    if (!mainFile || !mainFile.data) return null;
+
+    if (mainFile.data.chunks && mainFile.data.chunks.length > 0) {
+      try {
+        const chunkPromises = mainFile.data.chunks.map((chunkPath: string) => 
+          this.storage.readFile<any>(chunkPath).catch(() => null)
+        );
+        const chunkResults = await Promise.all(chunkPromises);
+        
+        let allItems: any[] = [];
+        for (const res of chunkResults) {
+          if (res && res.data && Array.isArray(res.data.videos)) {
+            allItems = allItems.concat(res.data.videos);
+          }
+        }
+        mainFile.data.videos = allItems;
+      } catch (e) {
+        console.error("Failed to load chunks for videos", e);
+      }
+    }
+    
+    return mainFile.data as VideosIndexFile;
+  }
+
   async getCategorySummaries(): Promise<CodeCategorySummary[]> {
     const { index } = await this.getOrLoadIndex();
     
     // Load videos index for thumbnails map
     const videosMap: Record<string, { thumbnail?: string; duration?: string; releaseDate?: string }> = {};
     try {
-      const videosFile = await this.storage.readFile<VideosIndexFile>("index/videos.json");
+      const videosData = await this.readVideosIndex();
+      const videosFile = videosData ? { data: videosData } : null;
       if (videosFile && Array.isArray(videosFile.data?.videos)) {
         for (const v of videosFile.data.videos) {
           if (v.code) {
@@ -391,7 +419,8 @@ export class CodeRegistryService {
     // Load videos index for enrichment
     const videosMap: Record<string, { thumbnail?: string; duration?: string; releaseDate?: string }> = {};
     try {
-      const videosFile = await this.storage.readFile<VideosIndexFile>("index/videos.json");
+      const videosData = await this.readVideosIndex();
+      const videosFile = videosData ? { data: videosData } : null;
       if (videosFile && Array.isArray(videosFile.data?.videos)) {
         for (const v of videosFile.data.videos) {
           if (v.code) {

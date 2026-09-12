@@ -127,9 +127,9 @@ export class MaintenanceService {
     // 1. Validate Master Indexes
     const [codesFile, actressesFile, studiosFile, videosFile] = await Promise.all([
       this.storage.readFile<CodesIndexFile>("index/codes.json", true),
-      this.storage.readFile<ActressesIndexFile>("index/actresses.json", true),
-      this.storage.readFile<StudiosIndexFile>("index/studios.json", true),
-      this.storage.readFile<VideosIndexFile>("index/videos.json", true),
+      this.readIndexWithChunks<ActressesIndexFile>("index/actresses.json"),
+      this.readIndexWithChunks<StudiosIndexFile>("index/studios.json"),
+      this.readIndexWithChunks<VideosIndexFile>("index/videos.json"),
     ]);
 
     filesCheckedCount += 4;
@@ -711,14 +711,12 @@ export class MaintenanceService {
     };
 
     // Commit all 4 master indexes in a single atomic batch commit
-    const commitRes = await this.storage.batchCommit(
-      [
+    const commitRes = await this.storage.batchCommit(this.ingestion.chunkLargeIndexes([
         { path: "index/codes.json", content: rebuiltCodes },
         { path: "index/actresses.json", content: rebuiltActresses },
         { path: "index/studios.json", content: rebuiltStudios },
         { path: "index/videos.json", content: rebuiltVideos },
-      ],
-      `[Maintenance] Complete rebuild of all master database indexes (${now})`
+      ]), `[Maintenance] Complete rebuild of all master database indexes (${now})`
     );
 
     // Invalidate local in-memory caches

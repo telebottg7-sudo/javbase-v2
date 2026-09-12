@@ -252,18 +252,37 @@ private async saveLocalDiskFiles(files: Array<{ path: string; content: string | 
   /**
    * Loads or returns cached master videos index.
    */
+
   async getVideosIndex(forceRefresh = false): Promise<VideosIndexFile> {
     const now = Date.now();
     if (!forceRefresh && this.cachedVideos && now - this.lastVideosFetchedAt < this.cacheTtlMs) {
       return this.cachedVideos;
     }
-
     const file = await this.storage.readFile<VideosIndexFile>(this.videosIndexPath);
     if (!file) {
       const initial = createInitialVideosIndex();
       this.cachedVideos = initial;
       this.lastVideosFetchedAt = Date.now();
       return initial;
+    }
+    
+    // Resolve chunks if present
+    if (file.data && file.data.chunks && file.data.chunks.length > 0) {
+      try {
+        const chunkPromises = file.data.chunks.map(chunkPath => 
+          this.storage.readFile<{videos: any[]}>(chunkPath).catch(() => null)
+        );
+        const chunkResults = await Promise.all(chunkPromises);
+        let allVideos: any[] = [];
+        for (const res of chunkResults) {
+          if (res && res.data && Array.isArray(res.data.videos)) {
+            allVideos = allVideos.concat(res.data.videos);
+          }
+        }
+        file.data.videos = allVideos;
+      } catch (e) {
+        console.error("Failed to load video chunks", e);
+      }
     }
 
     const val = validateVideosIndex(file.data);
@@ -279,7 +298,6 @@ private async saveLocalDiskFiles(files: Array<{ path: string; content: string | 
       this.lastVideosFetchedAt = Date.now();
       return safe;
     }
-
     this.cachedVideos = file.data;
     this.lastVideosFetchedAt = Date.now();
     return file.data;
@@ -288,18 +306,37 @@ private async saveLocalDiskFiles(files: Array<{ path: string; content: string | 
   /**
    * Loads or returns cached master actresses index.
    */
+
   async getActressesIndex(forceRefresh = false): Promise<ActressesIndexFile> {
     const now = Date.now();
     if (!forceRefresh && this.cachedActresses && now - this.lastActressesFetchedAt < this.cacheTtlMs) {
       return this.cachedActresses;
     }
-
     const file = await this.storage.readFile<ActressesIndexFile>(this.actressesIndexPath);
     if (!file) {
       const initial = createInitialActressesIndex();
       this.cachedActresses = initial;
       this.lastActressesFetchedAt = Date.now();
       return initial;
+    }
+    
+    // Resolve chunks if present
+    if (file.data && file.data.chunks && file.data.chunks.length > 0) {
+      try {
+        const chunkPromises = file.data.chunks.map(chunkPath => 
+          this.storage.readFile<{actresses: any[]}>(chunkPath).catch(() => null)
+        );
+        const chunkResults = await Promise.all(chunkPromises);
+        let allActresses: any[] = [];
+        for (const res of chunkResults) {
+          if (res && res.data && Array.isArray(res.data.actresses)) {
+            allActresses = allActresses.concat(res.data.actresses);
+          }
+        }
+        file.data.actresses = allActresses;
+      } catch (e) {
+        console.error("Failed to load actress chunks", e);
+      }
     }
 
     const val = validateActressesIndex(file.data);
@@ -315,7 +352,6 @@ private async saveLocalDiskFiles(files: Array<{ path: string; content: string | 
       this.lastActressesFetchedAt = Date.now();
       return safe;
     }
-
     this.cachedActresses = file.data;
     this.lastActressesFetchedAt = Date.now();
     return file.data;
@@ -324,18 +360,37 @@ private async saveLocalDiskFiles(files: Array<{ path: string; content: string | 
   /**
    * Loads or returns cached master studios index.
    */
+
   async getStudiosIndex(forceRefresh = false): Promise<StudiosIndexFile> {
     const now = Date.now();
     if (!forceRefresh && this.cachedStudios && now - this.lastStudiosFetchedAt < this.cacheTtlMs) {
       return this.cachedStudios;
     }
-
     const file = await this.storage.readFile<StudiosIndexFile>(this.studiosIndexPath);
     if (!file) {
       const initial = createInitialStudiosIndex();
       this.cachedStudios = initial;
       this.lastStudiosFetchedAt = Date.now();
       return initial;
+    }
+    
+    // Resolve chunks if present
+    if (file.data && file.data.chunks && file.data.chunks.length > 0) {
+      try {
+        const chunkPromises = file.data.chunks.map(chunkPath => 
+          this.storage.readFile<{studios: any[]}>(chunkPath).catch(() => null)
+        );
+        const chunkResults = await Promise.all(chunkPromises);
+        let allStudios: any[] = [];
+        for (const res of chunkResults) {
+          if (res && res.data && Array.isArray(res.data.studios)) {
+            allStudios = allStudios.concat(res.data.studios);
+          }
+        }
+        file.data.studios = allStudios;
+      } catch (e) {
+        console.error("Failed to load studio chunks", e);
+      }
     }
 
     const val = validateStudiosIndex(file.data);
@@ -351,7 +406,6 @@ private async saveLocalDiskFiles(files: Array<{ path: string; content: string | 
       this.lastStudiosFetchedAt = Date.now();
       return safe;
     }
-
     this.cachedStudios = file.data;
     this.lastStudiosFetchedAt = Date.now();
     return file.data;
@@ -656,7 +710,7 @@ private async saveLocalDiskFiles(files: Array<{ path: string; content: string | 
 
     // 4. Commit all files using atomic batch commit
     const commitMsg = `[Ingest] Ingest video ${normalizedCode} (${item.title.substring(0, 50)})`;
-    await this.storage.batchCommit(filesToCommit, commitMsg);
+    await this.storage.batchCommit(this.chunkLargeIndexes(filesToCommit), commitMsg);
 
     this.storage.purgeCache("index");
     await this.saveLocalDiskFiles(filesToCommit);
@@ -1083,7 +1137,7 @@ private async saveLocalDiskFiles(files: Array<{ path: string; content: string | 
       options?.commitMessage ||
       `[Bulk Ingestion] Batch ingested ${newItemsToIngest.length} videos in single transaction`;
     options?.onProgress?.("Pushing atomic commit to GitHub...", 0.4);
-    const commitResult = await this.storage.batchCommit(filesToCommit, commitMsg);
+    const commitResult = await this.storage.batchCommit(this.chunkLargeIndexes(filesToCommit), commitMsg);
     options?.onProgress?.("Writing to local disk cache...", 0.8);
 
     this.storage.purgeCache("index");
@@ -1418,7 +1472,7 @@ private async saveLocalDiskFiles(files: Array<{ path: string; content: string | 
     const commitMsg =
       input.commitMessage ||
       `[Actress Ingestion] Saved ${actressName} (${cleanSlug}) with ${ingestedCount} videos (${duplicateCount} duplicates filtered) in single transaction`;
-    const commitResult = await this.storage.batchCommit(filesToCommit, commitMsg);
+    const commitResult = await this.storage.batchCommit(this.chunkLargeIndexes(filesToCommit), commitMsg);
 
     this.storage.purgeCache("index");
     await this.saveLocalDiskFiles(filesToCommit);
@@ -1643,12 +1697,11 @@ private async saveLocalDiskFiles(files: Array<{ path: string; content: string | 
       freshStudios.studios = freshStudios.studios.filter((s) => s.slug !== testStudioSlug);
       freshStudios.totalCount = freshStudios.studios.length;
 
-      await this.storage.batchCommit(
-        [
+      await this.storage.batchCommit(this.chunkLargeIndexes([
           { path: this.videosIndexPath, content: freshVideos },
           { path: this.actressesIndexPath, content: freshActresses },
           { path: this.studiosIndexPath, content: freshStudios },
-        ],
+        ]),
         `[Test Cleanup] Clean up Step 6 test records for ${testCode}`
       );
 
@@ -1939,12 +1992,11 @@ private async saveLocalDiskFiles(files: Array<{ path: string; content: string | 
       cleanStudiosIdx.studios = cleanStudiosIdx.studios.filter((s) => !testStudioSet.has(s.slug));
       cleanStudiosIdx.totalCount = cleanStudiosIdx.studios.length;
 
-      await this.storage.batchCommit(
-        [
+      await this.storage.batchCommit(this.chunkLargeIndexes([
           { path: this.videosIndexPath, content: cleanVideosIdx },
           { path: this.actressesIndexPath, content: cleanActressesIdx },
           { path: this.studiosIndexPath, content: cleanStudiosIdx },
-        ],
+        ]),
         `[Step 7 Cleanup] Clean up Step 7 test artifacts in single transaction`
       );
 

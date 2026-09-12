@@ -39,6 +39,7 @@ export interface ActressesIndexFile {
   updatedAt: string;
   totalCount: number;
   actresses: ActressIndexEntry[];
+  chunks?: string[];
 }
 
 // 3. Index: Studios (database/index/studios.json)
@@ -57,6 +58,7 @@ export interface StudiosIndexFile {
   updatedAt: string;
   totalCount: number;
   studios: StudioIndexEntry[];
+  chunks?: string[];
 }
 
 // 4. Index: Videos (database/index/videos.json)
@@ -79,6 +81,7 @@ export interface VideosIndexFile {
   updatedAt: string;
   totalCount: number;
   videos: VideoIndexEntry[];
+  chunks?: string[];
 }
 
 // 4b. Index: Latest (database/index/latest.json)
