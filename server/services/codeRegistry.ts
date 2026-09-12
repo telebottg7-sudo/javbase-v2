@@ -262,6 +262,26 @@ export class CodeRegistryService {
     return mainFile.data as VideosIndexFile;
   }
 
+
+  /**
+   * Rebuilds the category summaries and saves it to index/codes-summary.json in GitHub
+   */
+  async rebuildCategorySummaries(): Promise<void> {
+    try {
+      const summaries = await this.getCategorySummaries();
+      const content = {
+        version: 1,
+        updatedAt: new Date().toISOString(),
+        totalCategories: summaries.length,
+        categories: summaries
+      };
+      await this.storage.writeFile("index/codes-summary.json", content, "Rebuild codes-summary.json");
+      console.log("[CodeRegistry] Rebuilt codes-summary.json in GitHub storage.");
+    } catch (e) {
+      console.error("[CodeRegistry] Failed to rebuild codes-summary.json:", e);
+    }
+  }
+
   async getCategorySummaries(): Promise<CodeCategorySummary[]> {
     const { index } = await this.getOrLoadIndex();
     
@@ -730,7 +750,7 @@ export class CodeRegistryService {
     
     // Trigger background rebuild of category summaries
     if (registered.length > 0) {
-      // this.rebuildCategorySummaries();
+      this.rebuildCategorySummaries().catch(e => console.error("Background summary rebuild failed:", e));
     }
 
     const stats = await this.getStats();
