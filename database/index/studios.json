@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "updatedAt": "2026-09-12T14:59:29.050Z",
+  "totalCount": 4,
+  "studios": [
+    {
+      "slug": "moodyz",
+      "name": "MOODYZ",
+      "letter": "m",
+      "path": "studio/m/moodyz.json",
+      "thumbnail": "https://javtiful.com/uploads/uploads/videos/thumbs/2026/09/12/f3db8c3450779b872fa170e596916ef3.jpg",
+      "videoCount": 148,
+      "updatedAt": "2026-09-12T14:59:29.050Z"
+    },
+    {
+      "slug": "peters-max",
+      "name": "Peters MAX",
+      "letter": "p",
+      "path": "studio/p/peters-max.json",
+      "thumbnail": "https://javtiful.com/uploads/uploads/videos/thumbs/2024/05/30/1aa1744757655a72e6c73fe1c176ad9a.jpg",
+      "videoCount": 1,
+      "updatedAt": "2026-09-12T14:37:40.582Z"
+    },
+    {
+      "slug": "prestige",
+      "name": "PRESTIGE",
+      "letter": "p",
+      "path": "studio/p/prestige.json",
+      "thumbnail": "https://javtiful.com/uploads/uploads/videos/thumbs/2026/09/09/74479091316f90d17d103689f83ecc44.jpg",
+      "videoCount": 396,
+      "updatedAt": "2026-09-12T14:37:40.582Z"
+    },
+    {
+      "slug": "s1-no1-style",
+      "name": "S1 NO.1 STYLE",
+      "letter": "s",
+      "path": "studio/s/s1-no1-style.json",
+      "thumbnail": "https://javtiful.com/uploads/uploads/videos/thumbs/2026/09/09/a24b55ef52e5d9ede67c6e8113e5c24e.jpg",
+      "videoCount": 685,
+      "updatedAt": "2026-09-12T09:07:25.344Z"
+    }
+  ]
+}

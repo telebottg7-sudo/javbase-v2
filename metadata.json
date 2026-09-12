@@ -1,0 +1,6 @@
+{
+  "name": "Javbase v2.0",
+  "description": "Complete Japanese video database application with fast search, browsing, catalog indexes, and powerful scraping tools with GitHub JSON storage.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
