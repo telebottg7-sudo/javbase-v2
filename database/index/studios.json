@@ -1,8 +1,17 @@
 {
   "version": 1,
-  "updatedAt": "2026-09-12T17:32:09.727Z",
-  "totalCount": 6,
+  "updatedAt": "2026-09-12T17:40:04.304Z",
+  "totalCount": 7,
   "studios": [
+    {
+      "slug": "kawaii",
+      "name": "Kawaii",
+      "letter": "k",
+      "path": "studio/k/kawaii.json",
+      "thumbnail": "https://javtiful.com/uploads/uploads/videos/thumbs/2026/08/30/2364bcdb741ceb2361a5170508a023a9.jpg",
+      "videoCount": 46,
+      "updatedAt": "2026-09-12T17:40:04.304Z"
+    },
     {
       "slug": "muku",
       "name": "Muku",
